@@ -14,11 +14,11 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.io import readsav
-from config import *
 import occultationFuncs as oF
 from datetime import datetime
 import os
 import shutil
+from config import *
 
 print("\nBeginning analysis of "+occname+"\n")
 
