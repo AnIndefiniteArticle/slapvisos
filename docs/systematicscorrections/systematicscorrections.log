@@ -1,0 +1,176 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=latex 2018.11.15)  5 SEP 2019 13:39
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**systematicscorrections.tex
+(./systematicscorrections.tex
+LaTeX2e <2016/02/01>
+Babel <3.9q> and hyphenation patterns for 3 language(s) loaded.
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2014/09/29 v1.4h Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo
+File: size12.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2014/10/28 v1.0g Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2016/01/03 v1.0q Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2016/01/03 v1.10 sin cos tan (DPC)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/graphics.cfg
+File: graphics.cfg 2010/04/23 v1.9 graphics configuration of TeX Live
+)
+Package graphics Info: Driver file: dvips.def on input line 95.
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/dvips.def
+File: dvips.def 2015/12/30 v3.0k Driver-dependent file (DPC,SPQR)
+))
+\Gin@req@height=\dimen103
+\Gin@req@width=\dimen104
+)
+No file systematicscorrections.aux.
+\openout1 = `systematicscorrections.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <14.4> on input line 12.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 12.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 39.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 39.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 39.
+
+LaTeX Warning: Reference `fig:pixels' on page 1 undefined on input line 52.
+
+
+LaTeX Warning: File `figs/PixelGrid.png' not found on input line 56.
+
+
+! LaTeX Error: File `figs/PixelGrid.png' not found.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.56 ...udegraphics[scale=0.5]{figs/PixelGrid.png}
+                                                  
+? 
+
+! LaTeX Error: Cannot determine size of graphic in figs/PixelGrid.png (no Bound
+ingBox).
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.56 ...udegraphics[scale=0.5]{figs/PixelGrid.png}
+                                                  
+? 
+File: figs/PixelGrid.png Graphic file (type eps)
+<figs/PixelGrid.png>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: Reference `fig:scans' on page 1 undefined on input line 84.
+
+[1
+
+]
+
+LaTeX Warning: File `figs/ScanLines.png' not found on input line 88.
+
+
+! LaTeX Error: File `figs/ScanLines.png' not found.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.88 ...udegraphics[scale=0.3]{figs/ScanLines.png}
+                                                  
+? 
+
+! LaTeX Error: Cannot determine size of graphic in figs/ScanLines.png (no Bound
+ingBox).
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.88 ...udegraphics[scale=0.3]{figs/ScanLines.png}
+                                                  
+? 
+File: figs/ScanLines.png Graphic file (type eps)
+<figs/ScanLines.png>
+Overfull \hbox (4.6998pt too wide) in paragraph at lines 99--99
+[]\OT1/cmr/bx/n/17.28 Calculating the The-o-ret-i-cal Met-ric from the
+ []
+
+
+Overfull \hbox (53.06079pt too wide) in paragraph at lines 108--109
+[]\OT1/cmr/m/n/12 R = (P[:pixelwidth+buffer] - P[2*pixelwidth+3*buffer/2:3*pixe
+lwidth+2*buffer])
+ []
+
+[2]
+Overfull \hbox (6.3098pt too wide) in paragraph at lines 122--122
+[]\OT1/cmr/bx/n/17.28 Fitting the Ex-per-i-men-tal Met-ric to the The-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 148--149
+
+ []
+
+[3] (./systematicscorrections.aux)
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 564 strings out of 494954
+ 6818 string characters out of 6181002
+ 57002 words of memory out of 5000000
+ 3904 multiletter control sequences out of 15000+600000
+ 9109 words of font info for 32 fonts, out of 8000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 25i,6n,19p,564b,247s stack positions out of 5000i,500n,10000p,200000b,80000s
+
+Output written on systematicscorrections.dvi (3 pages, 7584 bytes).

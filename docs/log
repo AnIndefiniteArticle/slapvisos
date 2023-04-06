@@ -1,0 +1,22 @@
+Wed Sep 21 03:58:45 PM EDT 2022
+
+Ok, I'm refreshing my documentation and setting up my environment for running the code.
+This time I'm going to organize the documentation and code into a git repo.
+
+I need to add to doc:
+- figures / plots with results
+- description thereof
+
+then print and bring in to Phil for discussion tomorrow
+
+I need to put in the git repo:
+- README.md
+- documentation
+- lib
+- bin
+- config.py
+
+TODO:
+have the code create output directory and store all plots and config files and code version to keep record of run
+include output log instead of just using stdout
+and versions of libraries

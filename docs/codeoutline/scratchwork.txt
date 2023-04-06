@@ -1,0 +1,157 @@
+This is an outline of what the code does
+
+Sections:
+ 1. configuration file
+ 2. functions
+ 3. code file
+ 4. plots
+
+--------------------------------------------------------------------------------
+ 1 | Configuration File
+
+variable	datatype	description
+------------------------------------------------------------
+cubdir		string		location of .cub files
+cubfiles	list of strings	list of the names of the .cub files
+flatdir		string		location of flat files
+PRFfile		string		location of PRF file
+
+visible		boolean		are there visible data?
+continua	tuple		what channels to look at
+
+starpixx	tuple		x pixel range of the star for aperture
+starpixy	tuple		y pixel range of the star for aperture
+
+slope		float		urad/cube slope of line plotted offset		float		mrad offset of line
+
+backgroundcheck	boolean		summing the background of the entire frame to
+                                check for gradients, etc?
+skipcol1	boolean		skip the first column when doing photometry?
+
+spaback		string		"Sensitivity" or "Additive" - different ways of
+                                applying the spatial background correction
+
+normclip	int		number of frames to clip for normalization of
+                                spectrum (if first few are bad)
+binning		int		number of cubes to bin temporally for binned
+                                spectra
+smooth		int		number of frames to smooth together for rolling
+                                average for center-finding algorithm
+transwindow	int		windowsize for pixel transitions finder
+
+zoomin		int		lower bound for zoomed plots
+zoomax		int		upper bound for zoomed plots
+
+movies		boolean		generate movies? (takes a LONG time)
+gamma		float, [0,1]	gamma stretch of output frames
+
+--------------------------------------------------------------------------------
+ 2 | Occultation Functions
+
+def readVIMSimaging(cubdir, cubfiles, ncubs, nspec, height, width, visible):
+  Reads in vims cub files
+
+def flatField(cubdata, flatfield, mode):
+  Reads in the official VIMS flatfield file, and uses it to correct the cubdata
+  (simple division)
+
+def spatialBackgroundSignal(cubdata, start, end):
+  subtracts the average value of each pixel as a spatial background subtraction
+  under the assumption that this average brightness is an extra physical signal
+
+def spatialBackgroundSensitivity(cubdata, start, end):
+  see above, but dividing out each pixel's average deviation from the the median
+  frame, normalized such that the median is 1.
+
+def temporalBackground(data, starpixx, starpixy, aper, normclip, zoomin):
+  takes the median of each frame at each wavelength outside of the aperture
+  and subtracts that value from the frame.
+  This function also returns a version normalized in each channel to the average
+  value in that channel between normclip and zoomin
+
+def transitionfinder(list, window, xpositive = True, Zpositive = True):
+  list is the list of brightest pixels. Window is the window that we look at
+  finds the mode of brightest pixels within a window surrounding the current
+  pixel. Returns a list of indices at which this mode transitions
+
+def twopixcenters(data, transitions, PRFs, xwidth, Zwidth):
+  this function is dominated by a for loop over the frames. It also keeps 
+  track of a "step" counter. step starts at 0 and increments every time that
+  a "transition" frame is reached per the transitions array inputted. For each
+  step, the current mode-brightest-pixel is compared to the brightest pixel on
+  the other side of the nearest transition by the math: 
+    comparisonpixel/brightestpixel
+  This "metric" is then compared to a similar metric from the PRF pixel scans:
+    pixelscanshiftedbyonepixelwidth / pixelscan
+  the pixel scan is shifted (np.roll) by one pixel width and divided by itself.
+  the direction of the shift is determined by whether the compare pixel is to
+  the left or right of the mode-brightest.
+  the sub-pixel position on the PRF scan with the metric closest to the
+  "empirical" metric calculated from the dataframe is called the "correction"
+  this correction is added to the current mode-brightest and returned as the
+  new center of star in that frame.
+
+--------------------------------------------------------------------------------
+ 3 | Code File
+
+--------------------
+ 3 a | Initialization
+
+imports code of config file
+
+Opens first cub file for information about shape, observing mode, etc
+Allocates space for reading in the rest
+
+Tries opening the data from a save file, if it fails, it reads in the data from
+the .cub files
+
+Reads header for mode information, sets pixel widths and flatfield location.
+
+Reads in PRF scans
+
+creates simple box aperture bounded by starpixx and starpixy
+NOTE: I have also added a "panhandle" to this aperture box in some previous
+iterations, this line is currently commented out
+
+allocates arrays for things
+
+--------------------
+ 3 b | Background Correction
+
+First step is subtracting the official VIMS flatfield (see oF.flatField)
+
+Second we either subtract or divide out the spatial background gradient
+(see oF.spatialBackgroundSensitivity and/or oF.spatialBackgroundSignal)
+
+Third, we subtract out the temporal background
+
+TODO: try to combine 2 and 3
+
+--------------------
+ 3 c | Loop over each Bandpass
+
+The following is a series of actions that we perform on each of the
+predetermined bandpasses:
+
+ - Make a new set of "frames" summed over the given bandpass
+ - if backgroundcheck == True:
+    - sum all of these frames to get the average value of each pixel to test
+      spatial background correction
+ - Smooth frames in time with a window size of "smooth"
+ - Mark the brighest pixel in the smoothed frame
+ - use transitionfinder to find the transitions in the brightestPixel array
+ - use bettercenters to calculate finer-grained centering
+
+--------------------
+ 3 d | COMING SOON: better photometry now that centers have been acquired
+
+Going to test three different methods of photometry:
+ - only taking photometry of the brightest pixel, and only when the star is
+   near the center of the pixel
+ - only taking photometry of the brightest pixel, scaled by the PRF scan based
+   on the center location within the pixel
+ - using a moving, fuzzy aperture
+
+--------------------
+ 4 | Plots
+  
