@@ -1,7 +1,11 @@
-Beta!
+Work in progress!
+Alpha!
 
 Code to analyze stellar occultations by Saturn taken by the Cassini
 spacecraft's Visual and Infrared Mapping Spectrometer.
+
+This code is currently focused on the imaging-mode occultations,
+with plans to expand it to all occultation when ready.
 
 Contents:
 
