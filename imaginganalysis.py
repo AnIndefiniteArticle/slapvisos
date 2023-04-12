@@ -346,7 +346,7 @@ plt.xlabel("Cube Number")
 plt.savefig(outdir+'/occultation.png')
 plt.clf()
 plt.close()
-plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+plt.figure(num=None, FIgsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
 plt.imshow(normphotometry[zoomin:zoomax].transpose(), vmin=0, vmax=2, interpolation='none', extent=[zoomin, zoomax, lambdas.max(), lambdas.min()], aspect='auto', cmap='copper')
 plt.colorbar()
 for q in range(nconts):

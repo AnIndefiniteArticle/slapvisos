@@ -31,7 +31,7 @@ transwindow = 20 # window size for pixel transitions finder
 zoomin   =  800
 zoomax   = 1000
 # MOVIES?
-movies	 = True
+movies	 = False
 gamma    = 0.3
 # Figure size settings
 figsize=(30,30)

@@ -127,6 +127,11 @@ def twopixcenters(data, transitions, PRFs, Xwidth, Zwidth):
     if step != 0 and (step == len(transitions)-1 or transitions[step+1][0] - i > i - transitions[step][0]):
       compareX = transitions[step-1][2]
       compareZ = transitions[step-1][1]
+    elif step == 0:
+      compareX = (transitions[step][2]+1) % len(frames[0])
+      #print("Is this X? %d" % len(frames[0]))
+      compareZ = (transitions[step][1]+1) % len(frames[0][0])
+      #print("Is this Z? %d" % len(frames[0][0]))
     else:
       compareX = transitions[step+1][2]
       compareZ = transitions[step+1][1]
@@ -138,7 +143,7 @@ def twopixcenters(data, transitions, PRFs, Xwidth, Zwidth):
 
     Ximagemetric = (frames[i][compareZ,compareX]) / frames[i][currentZ,currentX] #frames[i].max()
     # using the scan at index 7
-    Xscansmetric = np.roll(XscanVal[:,7], (-1**(Left+1))*284) / XscanVal[:,7]
+    Xscansmetric = np.roll(XscanVal[:,11], (-1**(Left+1))*284) / XscanVal[:,11]
     
     if Left:
       Xmetriccompare = (Ximagemetric - Xscansmetric[142:284])**2
