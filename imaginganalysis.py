@@ -21,10 +21,6 @@ import shutil
 from config import *
 import sys
 
-# DEBUGGING STATEMENTS delete when arguments are confirmed to have been passed correctly
-print(sys.argv)
-sys.exit()
-
 # read in outdir as an argument
 try:
   outdir = sys.argv[1]
