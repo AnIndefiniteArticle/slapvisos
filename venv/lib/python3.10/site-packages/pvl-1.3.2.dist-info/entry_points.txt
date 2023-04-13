@@ -1,0 +1,4 @@
+[console_scripts]
+pvl_translate = pvl.pvl_translate:main
+pvl_validate = pvl.pvl_validate:main
+

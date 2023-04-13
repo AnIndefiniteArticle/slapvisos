@@ -19,15 +19,21 @@ from datetime import datetime
 import os
 import shutil
 from config import *
+import sys
 
+# DEBUGGING STATEMENTS delete when arguments are confirmed to have been passed correctly
+print(sys.argv)
+sys.exit()
+
+# read in outdir as an argument
+try:
+  outdir = sys.argv[1]
+except:
+  print("invalid output directory (passed as first and only argument)")
+  sys.exit(1)
+
+# Welcome Message
 print("\nBeginning analysis of "+occname+"\n")
-
-outdir = "figs-" + occname + "-" + datetime.now().isoformat()
-print("Creating output directory: "+outdir)
-os.mkdir(outdir)
-
-print("copying over config file \n")
-shutil.copy("config.py", outdir)
 
   #####################
   #     READ IN DATA  #
