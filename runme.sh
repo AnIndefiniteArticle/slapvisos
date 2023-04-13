@@ -111,6 +111,14 @@ OUTDIR=$CONFIG$(date --iso-8601="minutes" -u | sed -e "s/+00:00//")z
 echo "Creating output directory $OUTDIR"
 mkdir $CONFIG/$OUTDIR
 
+# Create venv from requirements, if it doesn't already exist
+if [ -d venv ]; then
+  echo "using existing venv directory"
+else
+  python3 -m venv venv
+  venv/bin/pip install -r requirements.txt
+fi
+
 # Save venv library version information
 echo
 echo "Saving library information to $CONFIG/$OUTDIR/requirements.txt"
