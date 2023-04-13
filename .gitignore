@@ -4,3 +4,4 @@ figs*
 .ipynb*
 venv
 out-*
+*.swp
