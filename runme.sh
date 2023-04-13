@@ -90,26 +90,26 @@ fi
 
 # make the CONFIG directory, if we need to
 echo
-if [ -d $CONFIG ]; then
-  echo "$CONFIG directory exists"
+if [ -d out-$CONFIG ]; then
+  echo "out-$CONFIG directory exists"
 else
-  echo "creating directory $CONFIG"
-  mkdir $CONFIG
+  echo "creating directory out-$CONFIG"
+  mkdir out-$CONFIG
 fi
 
 # Check if data file exists, and report
 echo
-if [ -f $CONFIG/$CONFIG.npy ]; then
-  echo "$CONFIG/$CONFIG.npy data file exists. Will use this instead of re-reading CUB files to save time. Delete this file (or rename it) to force code to re-read CUB files from scratch."
+if [ -f out-$CONFIG/$CONFIG.npy ]; then
+  echo "out-$CONFIG/$CONFIG.npy data file exists. Will use this instead of re-reading CUB files to save time. Delete this file (or rename it) to force code to re-read CUB files from scratch."
 else
-  echo "Code will read in CUB files to create $CONFIG/$CONFIG.npy"
+  echo "Code will read in CUB files to create out-$CONFIG/$CONFIG.npy"
 fi
 
 # Create timestamped output directory
 echo
 OUTDIR=$CONFIG$(date --iso-8601="minutes" -u | sed -e "s/+00:00//")z
 echo "Creating output directory $OUTDIR"
-mkdir $CONFIG/$OUTDIR
+mkdir out-$CONFIG/$OUTDIR
 
 # Create venv from requirements, if it doesn't already exist
 if [ -d venv ]; then
@@ -121,14 +121,14 @@ fi
 
 # Save venv library version information
 echo
-echo "Saving library information to $CONFIG/$OUTDIR/requirements.txt"
-venv/bin/pip freeze > $CONFIG/$OUTDIR/requirements.txt
+echo "Saving library information to out-$CONFIG/$OUTDIR/requirements.txt"
+venv/bin/pip freeze > out-$CONFIG/$OUTDIR/requirements.txt
 
 # run the code, save the output to a logfile
 echo
 LOGFILE=$CONFIG/$OUTDIR/log
 echo "Running imaginganalysis.py with these settings, and sending output to $LOGFILE"
-venv/bin/python imaginganalysis.py $CONFIG/$OUTDIR | tee -a $LOGFILE
+venv/bin/python imaginganalysis.py out-$CONFIG/$OUTDIR | tee -a $LOGFILE
 
 # echo success
-echo "Run complete! See output in $CONFIG/$OUTDIR"
+echo "Run complete! See output in out-$CONFIG/$OUTDIR"

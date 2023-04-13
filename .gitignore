@@ -2,3 +2,5 @@
 __pycache__
 figs*
 .ipynb*
+venv
+out-*
