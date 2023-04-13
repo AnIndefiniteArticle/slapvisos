@@ -15,9 +15,6 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.io import readsav
 import occultationFuncs as oF
-from datetime import datetime
-import os
-import shutil
 from config import *
 import sys
 

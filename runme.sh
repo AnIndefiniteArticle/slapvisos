@@ -124,6 +124,11 @@ echo
 echo "Saving library information to out-$CONFIG/$OUTDIR/requirements.txt"
 venv/bin/pip freeze > out-$CONFIG/$OUTDIR/requirements.txt
 
+# Save config file used
+echo
+echo "Saving config file to out-$CONFIG/$OUTDIR/config.py"
+cp config.py out-$CONFIG/$OUTDIR/config.py
+
 # run the code, save the output to a logfile
 echo
 LOGFILE=$CONFIG/$OUTDIR/log
