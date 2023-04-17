@@ -88,28 +88,37 @@ if [ "$CONFIRM" != 'skip' ]; then
   fi
 fi
 
+# make the outputs directory, if we need to
+echo
+if [ -d outputs ]; then
+  echo "outputs directory exists"
+else
+  echo "creating directory outputs"
+  mkdir outputs
+fi
+
 # make the CONFIG directory, if we need to
 echo
-if [ -d out-$CONFIG ]; then
-  echo "out-$CONFIG directory exists"
+if [ -d outputs/$CONFIG ]; then
+  echo "outputs/$CONFIG directory exists"
 else
-  echo "creating directory out-$CONFIG"
-  mkdir out-$CONFIG
+  echo "creating directory outputs/$CONFIG"
+  mkdir outputs/$CONFIG
 fi
 
 # Check if data file exists, and report
 echo
-if [ -f out-$CONFIG/$CONFIG.npy ]; then
-  echo "out-$CONFIG/$CONFIG.npy data file exists. Will use this instead of re-reading CUB files to save time. Delete this file (or rename it) to force code to re-read CUB files from scratch."
+if [ -f outputs/$CONFIG/$CONFIG.npy ]; then
+  echo "outputs/$CONFIG/$CONFIG.npy data file exists. Will use this instead of re-reading CUB files to save time. Delete this file (or rename it) to force code to re-read CUB files from scratch."
 else
-  echo "Code will read in CUB files to create out-$CONFIG/$CONFIG.npy"
+  echo "Code will read in CUB files to create outputs/$CONFIG/$CONFIG.npy"
 fi
 
 # Create timestamped output directory
 echo
 OUTDIR=$CONFIG$(date --iso-8601="minutes" -u | sed -e "s/+00:00//")z
 echo "Creating output directory $OUTDIR"
-mkdir out-$CONFIG/$OUTDIR
+mkdir outputs/$CONFIG/$OUTDIR
 
 # Create venv from requirements, if it doesn't already exist
 if [ -d venv ]; then
@@ -121,19 +130,19 @@ fi
 
 # Save venv library version information
 echo
-echo "Saving library information to out-$CONFIG/$OUTDIR/requirements.txt"
-venv/bin/pip freeze > out-$CONFIG/$OUTDIR/requirements.txt
+echo "Saving library information to outputs/$CONFIG/$OUTDIR/requirements.txt"
+venv/bin/pip freeze > outputs/$CONFIG/$OUTDIR/requirements.txt
 
 # Save config file used
 echo
-echo "Saving config file to out-$CONFIG/$OUTDIR/config.py"
-cp config.py out-$CONFIG/$OUTDIR/config.py
+echo "Saving config file to outputs/$CONFIG/$OUTDIR/config.py"
+cp config.py outputs/$CONFIG/$OUTDIR/config.py
 
 # run the code, save the output to a logfile
 echo
-LOGFILE=$CONFIG/$OUTDIR/log
+LOGFILE=outpust/$CONFIG/$OUTDIR/log
 echo "Running imaginganalysis.py with these settings, and sending output to $LOGFILE"
-venv/bin/python imaginganalysis.py out-$CONFIG/$OUTDIR | tee -a $LOGFILE
+venv/bin/python imaginganalysis.py outputs/$CONFIG/$OUTDIR | tee -a $LOGFILE
 
 # echo success
-echo "Run complete! See output in out-$CONFIG/$OUTDIR"
+echo "Run complete! See output in outputs/$CONFIG/$OUTDIR"

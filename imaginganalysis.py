@@ -47,11 +47,11 @@ width    = shape[2]
 maxpix   = np.max((height,width))
 # Read in data, or load from save file
 try:
-  cubdata = np.load(occname+"data.npy")
+  cubdata = np.load("outputs/"+occname+"/"+occname+"data.npy")
   print("loaded previous save file")
 except:
   cubdata = oF.readVIMSimaging(cubdir, cubfiles, ncubs, nspec, height, width, visible)
-  np.save(occname+"data.npy", cubdata)
+  np.save("outputs/"+occname+"/"+occname+"data.npy", cubdata)
 
 # Get pixel dimensions
 if ps.CubeFile(cubdir+cubfiles[0]).label['IsisCube']['Instrument']['SamplingMode'] == 'HI-RES':
