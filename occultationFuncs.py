@@ -2,6 +2,7 @@
 import numpy as np
 import pysis as ps
 import matplotlib.pyplot as plt
+import matplotlib.colors as mpc
 from scipy.io import readsav
 from scipy import stats
 
@@ -99,7 +100,7 @@ def transitionfinder(list, window, Xpositive = True, Zpositive = True):
 
   return transitions
 
-def prfmetric(PRFfile, pixelSize=(0.25,0.5))
+def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=300, fontsize=12, markersize=0.5):
   """
   Calculate metric for PRF scan
 
@@ -112,16 +113,24 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5))
   pixelSize : 2-tuple 
       Width of pixel to in each direction (as determined by mirror motion /
       look angle, not response / sensitivity)
+  Plots : boolean
+      Create diagnostic plots?
+  figsize : 2-tuple
+      width/height of diagnostic plots
+  dpi : int
+      dots-per-inch resolution of diagnostic plots
+  fontsize : int
+      size of plot fonts in pt
 
   Returns
   -------
   Xscanmetrics : ndarray
-      shape: (number of scans, number of points per scan, 4), with the 4
-      representing [Xposition, Zposition, metric measured to left, metric
+      shape: (number of scans, number of points per scan, 5), with the 5
+      representing [Xposition, Zposition, nominal value, metric measured to left, metric
       measured to right]
   Zscanmetrics : ndarray
-      shape: (number of scans, number of points per scan, 4), with the 4
-      representing [Xposition, Zposition, metric measured up, metric measured
+      shape: (number of scans, number of points per scan, 5), with the 5
+      representing [Xposition, Zposition, nominal value, metric measured up, metric measured
       down]
   """
   # Read in PRF file and allocate arrays
@@ -129,15 +138,251 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5))
   XscanVal = PRFs['PRF1'] 
   XscanXs  = PRFs['XPOS1']
   XscanZs  = PRFs['ZPOS1']
-  Xscans   = np.column_stack((XscanXs, XscanZx, XscanVal))
+  Xscans   = np.stack((XscanXs, XscanZs, XscanVal), axis=2)
   ZscanVal = PRFs['PRF2'] 
   ZscanXs  = PRFs['XPOS2']
   ZscanZs  = PRFs['ZPOS2']
-  Zscans   = np.column_stack((ZscanXs, ZscanZx, ZscanVal))
+  Zscans   = np.stack((ZscanXs, ZscanZs, ZscanVal), axis=2)
+  plt.rcParams.update({'font.size': fontsize})
 
-  # calculate index of position closest to one pixel in either direction
-  for scans in (Xscans, Zscans):
-    
+  if Plots:
+    # Plot positions of all scans over a rectangle representing the nominal pixel position
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.scatter(Xscans[:,:,0], Xscans[:,:,1], s=markersize, c=Xscans[:,:,2], cmap='copper', norm=mpc.LogNorm())
+    plt.scatter(Zscans[:,:,0], Zscans[:,:,1], s=markersize, c=Zscans[:,:,2], cmap='copper', norm=mpc.LogNorm())
+    plt.plot([-pixelSize[0]/2,-pixelSize[0]/2,pixelSize[0]/2,pixelSize[0]/2,-pixelSize[0]/2],
+             [-pixelSize[1]/2,pixelSize[1]/2,pixelSize[1]/2,-pixelSize[1]/2,-pixelSize[1]/2], 'c:')
+    plt.colorbar()
+    plt.xlim((-1.1,1.1))
+    plt.ylim((-1.1,1.1))
+    plt.title("X and Z scan positions, with data gaps, overlaid on rectangle of nominal pixel size")
+    plt.xlabel("X position of scans")
+    plt.ylabel("Z position of scans")
+    plt.savefig("scanpositions.png")
+    plt.close()
+
+    # plot distribution of values for each X scan
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.plot(Xscans[:,:,1], Xscans[:,:,2], '.')
+    plt.title("X scans distribution of values per scan")
+    plt.ylabel("Normalized pixel response")
+    plt.xlabel("Z position of X scans")
+    plt.savefig("xscanzvals.png")
+    plt.close()
+
+    # plot distribution of values for each Z scan
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.plot(Zscans[:,:,0], Zscans[:,:,2], '.')
+    plt.title("Z scans distribution of values per scan")
+    plt.ylabel("Normalized pixel response")
+    plt.xlabel("X position of Z scans")
+    plt.savefig("zscanxvals.png")
+    plt.close()
+
+    # plot X scans vs X position
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.plot(Xscans[:,:,0], Xscans[:,:,2], '.')
+    plt.title("X scans pixel response with X")
+    plt.ylabel("Normalized pixel response")
+    plt.xlabel("X position in X scans")
+    plt.savefig("xscanxvals.png")
+    plt.close()
+
+    # plot Z scans vs Z position
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.plot(Zscans[:,:,1], Zscans[:,:,2], '.')
+    plt.title("Z scans pixel response with Z")
+    plt.ylabel("Normalized pixel response")
+    plt.xlabel("Z position in Z scans")
+    plt.savefig("zscanzvals.png")
+    plt.close()
+
+  # Allocate arrays to hold scan values shifted by one pixel left/right
+  Lefts = np.zeros(Xscans[:,:,0].shape)
+  Rights = np.zeros(Xscans[:,:,0].shape)
+  # for each scan
+  for j in range(len(Xscans[0])):
+    # for each value in each scan
+    for i in range(len(Xscans)):
+      # calculate position one nominal pixel width away
+      Left  = Xscans[i,j,0] - pixelSize[0]
+      Right = Xscans[i,j,0] + pixelSize[0]
+      # if out of bounds, set to nan
+      if Left < Xscans[:,j,0].min():
+        Lefts[i,j] = np.nan
+      # else, find the closest position value
+      else:
+        k = np.argmin((Left - Xscans[:,j,0])**2)
+        Lefts[i,j] = Xscans[k,j,2]/Xscans[i,j,2]
+      # if out of bounds, set to nan
+      if Right > Xscans[:,j,0].max():
+        Rights[i,j] = np.nan
+      # else, find the closest position value
+      else:
+        k = np.argmin((Right - Xscans[:,j,0])**2)
+        Rights[i,j] = Xscans[k,j,2]/Xscans[i,j,2]
+    if Plots:
+      plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+      # plot X scan metrics vs X positions
+      plt.plot(Xscans[:,j,0],  Lefts[:,j], 'r', label="Value one pixel-width left divided by value at this pixel position")
+      plt.plot(Xscans[:,j,0], Rights[:,j], 'g', label="Value one pixel-width right divided by value at this pixel position")
+      # add vertical lines at nominal pixel boundaries
+      plt.axvline(-pixelSize[0]/2, linestyle='dashed')
+      plt.axvline( pixelSize[0]/2, linestyle='dashed')
+      # add horizontal line at unity (metric should be 1 at pixel boundary)
+      plt.axhline(1,               linestyle='dashed')
+      # titles and labels
+      plt.title("Metrics along X scan number %d" %j)
+      plt.xlabel("X position in brightest pixel")
+      plt.ylabel("PRF (theoretical) pixel comparison metric value")
+      plt.legend(loc=9)
+      # bound in x to slightly outside of pixel
+      plt.xlim(-pixelSize[0]/2-.1, pixelSize[0]/2+.1)
+      # bound in y to reasonable range
+      plt.ylim(0,1.2)
+      plt.savefig("PRFmetricXscan%d.png" %j)
+      plt.close()
+
+  # Allocate arrays to hold scan values shifted by one pixel to up/down
+  Ups   = np.zeros(Zscans[:,:,0].shape)
+  Downs = np.zeros(Zscans[:,:,0].shape)
+  # for each scan
+  for j in range(len(Zscans[0])):
+    # for each value in each scan
+    for i in range(len(Zscans)):
+      # calculate position one nominal pixel height away
+      Up   = Zscans[i,j,1] - pixelSize[1]
+      Down = Zscans[i,j,1] + pixelSize[1]
+      # if out of bounds, set to nan
+      if Up < Zscans[:,j,1].min():
+        Ups[i,j] = np.nan
+      # else, find the closest position value
+      else:
+        k = np.argmin((Up - Zscans[:,j,1])**2)
+        Ups[i,j] = Zscans[k,j,2]/Zscans[i,j,2]
+      # if out of bounds, set to nan
+      if Down > Zscans[:,j,1].max():
+        Downs[i,j] = np.nan
+      # else, find the closest position value
+      else:
+        k = np.argmin((Down - Zscans[:,j,1])**2)
+        Downs[i,j] = Zscans[k,j,2]/Zscans[i,j,2]
+
+    if Plots:
+      plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+      # plot Z scan metrics vs Z positions
+      plt.plot(Zscans[:,j,1],   Ups[:,j], 'r', label="Value one pixel-height up divided by value at this pixel position")
+      plt.plot(Zscans[:,j,1], Downs[:,j], 'g', label="Value one pixel-height down divided by value at this pixel position")
+      # add vertical lines at nominal pixel boundaries
+      plt.axvline(-pixelSize[1]/2, linestyle='dashed')
+      plt.axvline( pixelSize[1]/2, linestyle='dashed')
+      # add horizontal line at unity (metric should be 1 at pixel boundary)
+      plt.axhline(1,               linestyle='dashed')
+      # titles and labels
+      plt.title("Metrics along Z scan number %d" %j)
+      plt.xlabel("Z position in brightest pixel")
+      plt.ylabel("PRF (theoretical) pixel comparison metric value")
+      plt.legend(loc=9)
+      # bound in x to slightly outside pixel
+      plt.xlim(-pixelSize[1]/2-.1, pixelSize[1]/2+.1)
+      # bound in y to reasonable range
+      plt.ylim(0,1.2)
+      plt.savefig("PRFmetricZscan%d.png" %j)
+      plt.close()
+
+  # overview plots of metric values
+  if Plots:
+    # Lefts
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.scatter(Xscans[:,:,0], Xscans[:,:,1], s=markersize, c=Lefts, cmap='copper', norm=mpc.LogNorm(vmax=1.1))
+    plt.plot([-pixelSize[0]/2,-pixelSize[0]/2,pixelSize[0]/2,pixelSize[0]/2,-pixelSize[0]/2],
+             [-pixelSize[1]/2,pixelSize[1]/2,pixelSize[1]/2,-pixelSize[1]/2,-pixelSize[1]/2], 'c:')
+    plt.colorbar()
+    plt.xlim((-1.1,1.1))
+    plt.ylim((-1.1,1.1))
+    plt.title("X scan metric comparing to pixel on left")
+    plt.xlabel("X position of scans")
+    plt.ylabel("Z position of scans")
+    plt.savefig("metricoverviewleft.png")
+    plt.close()
+
+    # Rights
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.scatter(Xscans[:,:,0], Xscans[:,:,1], s=markersize, c=Rights, cmap='copper', norm=mpc.LogNorm(vmax=1.1))
+    plt.plot([-pixelSize[0]/2,-pixelSize[0]/2,pixelSize[0]/2,pixelSize[0]/2,-pixelSize[0]/2],
+             [-pixelSize[1]/2,pixelSize[1]/2,pixelSize[1]/2,-pixelSize[1]/2,-pixelSize[1]/2], 'c:')
+    plt.colorbar()
+    plt.xlim((-1.1,1.1))
+    plt.ylim((-1.1,1.1))
+    plt.title("X scan metric comparing to pixel on right")
+    plt.xlabel("X position of scans")
+    plt.ylabel("Z position of scans")
+    plt.savefig("metricoverviewright.png")
+    plt.close()
+
+    # Ups
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.scatter(Zscans[:,:,0], Zscans[:,:,1], s=markersize, c=Ups, cmap='copper', norm=mpc.LogNorm(vmax=1.1))
+    plt.plot([-pixelSize[0]/2,-pixelSize[0]/2,pixelSize[0]/2,pixelSize[0]/2,-pixelSize[0]/2],
+             [-pixelSize[1]/2,pixelSize[1]/2,pixelSize[1]/2,-pixelSize[1]/2,-pixelSize[1]/2], 'c:')
+    plt.colorbar()
+    plt.xlim((-1.1,1.1))
+    plt.ylim((-1.1,1.1))
+    plt.title("Z scan metric comparing to pixel above")
+    plt.xlabel("X position of scans")
+    plt.ylabel("Z position of scans")
+    plt.savefig("metricoverviewup.png")
+    plt.close()
+
+    # Downs
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.scatter(Zscans[:,:,0], Zscans[:,:,1], s=markersize, c=Downs, cmap='copper', norm=mpc.LogNorm( vmax=1.1))
+    plt.plot([-pixelSize[0]/2,-pixelSize[0]/2,pixelSize[0]/2,pixelSize[0]/2,-pixelSize[0]/2],
+             [-pixelSize[1]/2,pixelSize[1]/2,pixelSize[1]/2,-pixelSize[1]/2,-pixelSize[1]/2], 'c:')
+    plt.colorbar()
+    plt.xlim((-1.1,1.1))
+    plt.ylim((-1.1,1.1))
+    plt.title("Z scan metric comparing to pixel below")
+    plt.xlabel("X position of scans")
+    plt.ylabel("Z position of scans")
+    plt.savefig("metricoverviewdown.png")
+    plt.close()
+
+    # Now, overall X metric (Lefts when Xpos < 0, else Rights)
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.scatter(Xscans[np.where(XscanXs>0)][:,0], Xscans[np.where(XscanXs>0)][:,1], s=markersize, c= Lefts[np.where(XscanXs>0)], cmap='copper', norm=mpc.LogNorm(vmax=1.1))
+    plt.scatter(Xscans[np.where(XscanXs<0)][:,0], Xscans[np.where(XscanXs<0)][:,1], s=markersize, c=Rights[np.where(XscanXs<0)], cmap='copper', norm=mpc.LogNorm(vmax=1.1))
+    plt.plot([-pixelSize[0]/2,-pixelSize[0]/2,pixelSize[0]/2,pixelSize[0]/2,-pixelSize[0]/2],
+             [-pixelSize[1]/2,pixelSize[1]/2,pixelSize[1]/2,-pixelSize[1]/2,-pixelSize[1]/2], 'c:')
+    plt.colorbar()
+    plt.xlim((-1.1,1.1))
+    plt.ylim((-1.1,1.1))
+    plt.title("X scan metric comparing to nearest adjacent pixel in X")
+    plt.xlabel("X position of scans")
+    plt.ylabel("Z position of scans")
+    plt.savefig("metricoverviewX.png")
+    plt.close()
+
+    # and, finally, overall Z metric (similar)
+    plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
+    plt.scatter(Zscans[np.where(ZscanZs>0)][:,0], Zscans[np.where(ZscanZs>0)][:,1], s=markersize, c=  Ups[np.where(ZscanZs>0)], cmap='copper', norm=mpc.LogNorm( vmax=1.1))
+    plt.scatter(Zscans[np.where(ZscanZs<0)][:,0], Zscans[np.where(ZscanZs<0)][:,1], s=markersize, c=Downs[np.where(ZscanZs<0)], cmap='copper', norm=mpc.LogNorm( vmax=1.1))
+    plt.plot([-pixelSize[0]/2,-pixelSize[0]/2,pixelSize[0]/2,pixelSize[0]/2,-pixelSize[0]/2],
+             [-pixelSize[1]/2,pixelSize[1]/2,pixelSize[1]/2,-pixelSize[1]/2,-pixelSize[1]/2], 'c:')
+    plt.colorbar()
+    plt.xlim((-1.1,1.1))
+    plt.ylim((-1.1,1.1))
+    plt.title("Z scan metric comparing to nearest adjacent pixel in Z")
+    plt.xlabel("X position of scans")
+    plt.ylabel("Z position of scans")
+    plt.savefig("metricoverviewZ.png")
+    plt.close()
+
+  # stack up the relevant arrays in the form we want
+  Xscanmetrics = np.stack((XscanXs, XscanZs, XscanVal,  Lefts, Rights), axis=2)
+  Zscanmetrics = np.stack((ZscanXs, ZscanZs, ZscanVal,    Ups,  Downs), axis=2)
+  # and return them
+  return Xscanmetrics, Zscanmetrics
   
 def twopixcenters(data, transitions, PRFfile, Xwidth, Zwidth):
   frames   = data / data.max()
