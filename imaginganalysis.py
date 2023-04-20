@@ -13,7 +13,6 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from scipy.io import readsav
 import occultationFuncs as oF
 from config import *
 import sys
@@ -67,13 +66,13 @@ else:
   print("Low-Resolution Frames")
 
 # read in PRF Scans
-PRFs     = readsav(PRFfile)
-XscanVal = PRFs['PRF1']
-XscanXs  = PRFs['XPOS1']
-XscanZs  = PRFs['ZPOS1']
-ZscanVal = PRFs['PRF2']
-ZscanXs  = PRFs['XPOS2']
-ZscanZs  = PRFs['ZPOS2']
+#PRFs     = readsav(PRFfile)
+#XscanVal = PRFs['PRF1']
+#XscanXs  = PRFs['XPOS1']
+#XscanZs  = PRFs['ZPOS1']
+#ZscanVal = PRFs['PRF2']
+#ZscanXs  = PRFs['XPOS2']
+#ZscanZs  = PRFs['ZPOS2']
 
   #####################
   #  CREATE APERTURE  #
@@ -188,7 +187,7 @@ for i in range(nconts):
         brightestPixel[j,:,i] = (np.where(smoothframes[j] == smoothframes[j].max())[0][0], np.where(smoothframes[j] == smoothframes[j].max())[1][0])
 
   pixeltransitions[i]         = oF.transitionfinder(brightestPixel[:,:,i], transwindow)
-  bettercenters[:,:,i]        = oF.twopixcenters(smoothframes, pixeltransitions[i], PRFs, Xpixelwidth, Zpixelwidth)
+  bettercenters[:,:,i]        = oF.twopixcenters(smoothframes, pixeltransitions[i], PRFfile, Xpixelwidth, Zpixelwidth)
 
 #####################
 #       PLOTS       #

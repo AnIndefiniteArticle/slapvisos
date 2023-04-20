@@ -2,6 +2,7 @@
 import numpy as np
 import pysis as ps
 import matplotlib.pyplot as plt
+from scipy.io import readsav
 from scipy import stats
 
 def readVIMSimaging(cubdir, cubfiles, ncubs, nspec, height, width, visible):
@@ -98,13 +99,47 @@ def transitionfinder(list, window, Xpositive = True, Zpositive = True):
 
   return transitions
 
-def twopixcenters(data, transitions, PRFs, Xwidth, Zwidth):
+def prfmetric(PRFfile, pixelSize=(0.25,0.5))
+  """
+  Calculate metric for PRF scan
+
+  Compares PRF scan values one pixel width apart in each direction
+
+  Parameters
+  ----------
+  PRFfile : string
+      File location for PRF scan
+  pixelSize : 2-tuple 
+      Width of pixel to in each direction (as determined by mirror motion /
+      look angle, not response / sensitivity)
+
+  Returns
+  -------
+  Xscanmetrics : ndarray
+      shape: (number of scans, number of points per scan, 4), with the 4
+      representing [Xposition, Zposition, metric measured to left, metric
+      measured to right]
+  Zscanmetrics : ndarray
+      shape: (number of scans, number of points per scan, 4), with the 4
+      representing [Xposition, Zposition, metric measured up, metric measured
+      down]
+  """
+  # Read in PRF file and allocate arrays
+  PRFs     = readsav(PRFfile)
   XscanVal = PRFs['PRF1'] 
   XscanXs  = PRFs['XPOS1']
   XscanZs  = PRFs['ZPOS1']
+  Xscans   = np.column_stack((XscanXs, XscanZx, XscanVal))
   ZscanVal = PRFs['PRF2'] 
   ZscanXs  = PRFs['XPOS2']
   ZscanZs  = PRFs['ZPOS2']
+  Zscans   = np.column_stack((ZscanXs, ZscanZx, ZscanVal))
+
+  # calculate index of position closest to one pixel in either direction
+  for scans in (Xscans, Zscans):
+    
+  
+def twopixcenters(data, transitions, PRFfile, Xwidth, Zwidth):
   frames   = data / data.max()
   centers  = np.zeros((len(frames),2))
   #metricreturns = np.zeros((len(frames), 142))
