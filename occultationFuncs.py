@@ -100,7 +100,7 @@ def transitionfinder(list, window, Xpositive = True, Zpositive = True):
 
   return transitions
 
-def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=300, fontsize=12, markersize=0.5):
+def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=300, fontsize=12, markersize=0.5, outdir='outputs/PRFscanplots/'):
   """
   Calculate metric for PRF scan
 
@@ -158,7 +158,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("X and Z scan positions, with data gaps, overlaid on rectangle of nominal pixel size")
     plt.xlabel("X position of scans")
     plt.ylabel("Z position of scans")
-    plt.savefig("scanpositions.png")
+    plt.savefig(outdir+"scanpositions.png")
     plt.close()
 
     # plot distribution of values for each X scan
@@ -167,7 +167,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("X scans distribution of values per scan")
     plt.ylabel("Normalized pixel response")
     plt.xlabel("Z position of X scans")
-    plt.savefig("xscanzvals.png")
+    plt.savefig(outdir+"xscanzvals.png")
     plt.close()
 
     # plot distribution of values for each Z scan
@@ -176,7 +176,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("Z scans distribution of values per scan")
     plt.ylabel("Normalized pixel response")
     plt.xlabel("X position of Z scans")
-    plt.savefig("zscanxvals.png")
+    plt.savefig(outdir+"zscanxvals.png")
     plt.close()
 
     # plot X scans vs X position
@@ -185,7 +185,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("X scans pixel response with X")
     plt.ylabel("Normalized pixel response")
     plt.xlabel("X position in X scans")
-    plt.savefig("xscanxvals.png")
+    plt.savefig(outdir+"xscanxvals.png")
     plt.close()
 
     # plot Z scans vs Z position
@@ -194,7 +194,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("Z scans pixel response with Z")
     plt.ylabel("Normalized pixel response")
     plt.xlabel("Z position in Z scans")
-    plt.savefig("zscanzvals.png")
+    plt.savefig(outdir+"zscanzvals.png")
     plt.close()
 
   # Allocate arrays to hold scan values shifted by one pixel left/right
@@ -240,7 +240,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
       plt.xlim(-pixelSize[0]/2-.1, pixelSize[0]/2+.1)
       # bound in y to reasonable range
       plt.ylim(0,1.2)
-      plt.savefig("PRFmetricXscan%d.png" %j)
+      plt.savefig(outdir+"PRFmetricXscan%d.png" %j)
       plt.close()
 
   # Allocate arrays to hold scan values shifted by one pixel to up/down
@@ -287,7 +287,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
       plt.xlim(-pixelSize[1]/2-.1, pixelSize[1]/2+.1)
       # bound in y to reasonable range
       plt.ylim(0,1.2)
-      plt.savefig("PRFmetricZscan%d.png" %j)
+      plt.savefig(outdir+"PRFmetricZscan%d.png" %j)
       plt.close()
 
   # overview plots of metric values
@@ -303,7 +303,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("X scan metric comparing to pixel on left")
     plt.xlabel("X position of scans")
     plt.ylabel("Z position of scans")
-    plt.savefig("metricoverviewleft.png")
+    plt.savefig(outdir+"metricoverviewleft.png")
     plt.close()
 
     # Rights
@@ -317,7 +317,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("X scan metric comparing to pixel on right")
     plt.xlabel("X position of scans")
     plt.ylabel("Z position of scans")
-    plt.savefig("metricoverviewright.png")
+    plt.savefig(outdir+"metricoverviewright.png")
     plt.close()
 
     # Ups
@@ -331,7 +331,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("Z scan metric comparing to pixel above")
     plt.xlabel("X position of scans")
     plt.ylabel("Z position of scans")
-    plt.savefig("metricoverviewup.png")
+    plt.savefig(outdir+"metricoverviewup.png")
     plt.close()
 
     # Downs
@@ -345,7 +345,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("Z scan metric comparing to pixel below")
     plt.xlabel("X position of scans")
     plt.ylabel("Z position of scans")
-    plt.savefig("metricoverviewdown.png")
+    plt.savefig(outdir+"metricoverviewdown.png")
     plt.close()
 
     # Now, overall X metric (Lefts when Xpos < 0, else Rights)
@@ -360,7 +360,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("X scan metric comparing to nearest adjacent pixel in X")
     plt.xlabel("X position of scans")
     plt.ylabel("Z position of scans")
-    plt.savefig("metricoverviewX.png")
+    plt.savefig(outdir+"metricoverviewX.png")
     plt.close()
 
     # and, finally, overall Z metric (similar)
@@ -375,7 +375,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     plt.title("Z scan metric comparing to nearest adjacent pixel in Z")
     plt.xlabel("X position of scans")
     plt.ylabel("Z position of scans")
-    plt.savefig("metricoverviewZ.png")
+    plt.savefig(outdir+"metricoverviewZ.png")
     plt.close()
 
   # stack up the relevant arrays in the form we want
