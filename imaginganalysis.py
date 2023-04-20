@@ -65,15 +65,6 @@ else:
   mode        = "LoRes"
   print("Low-Resolution Frames")
 
-# read in PRF Scans
-#PRFs     = readsav(PRFfile)
-#XscanVal = PRFs['PRF1']
-#XscanXs  = PRFs['XPOS1']
-#XscanZs  = PRFs['ZPOS1']
-#ZscanVal = PRFs['PRF2']
-#ZscanXs  = PRFs['XPOS2']
-#ZscanZs  = PRFs['ZPOS2']
-
   #####################
   #  CREATE APERTURE  #
   #####################
