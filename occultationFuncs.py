@@ -212,14 +212,14 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
         Lefts[i,j] = np.nan
       # else, find the closest position value
       else:
-        k = np.argmin((Left - Xscans[:,j,0])**2)
+        k = np.argmin(abs(Left - Xscans[:,j,0]))
         Lefts[i,j] = Xscans[k,j,2]/Xscans[i,j,2]
       # if out of bounds, set to nan
       if Right > Xscans[:,j,0].max():
         Rights[i,j] = np.nan
       # else, find the closest position value
       else:
-        k = np.argmin((Right - Xscans[:,j,0])**2)
+        k = np.argmin(abs(Right - Xscans[:,j,0]))
         Rights[i,j] = Xscans[k,j,2]/Xscans[i,j,2]
     if Plots:
       plt.figure(num=None, figsize=figsize, dpi=dpi, facecolor='w', edgecolor='k')
@@ -258,14 +258,14 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
         Ups[i,j] = np.nan
       # else, find the closest position value
       else:
-        k = np.argmin((Up - Zscans[:,j,1])**2)
+        k = np.argmin(abs(Up - Zscans[:,j,1]))
         Ups[i,j] = Zscans[k,j,2]/Zscans[i,j,2]
       # if out of bounds, set to nan
       if Down > Zscans[:,j,1].max():
         Downs[i,j] = np.nan
       # else, find the closest position value
       else:
-        k = np.argmin((Down - Zscans[:,j,1])**2)
+        k = np.argmin(abs(Down - Zscans[:,j,1]))
         Downs[i,j] = Zscans[k,j,2]/Zscans[i,j,2]
 
     if Plots:
