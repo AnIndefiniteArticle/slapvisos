@@ -88,7 +88,7 @@ def temporalBackground(data, starpixx, starpixy, aper, normclip, zoomin):
   normphotometry  = photometry / np.nanmedian(photometry[normclip:zoomin], axis=0)
   return cordata, normphotometry
 
-def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=300, fontsize=12, markersize=0.5, outdir='outputs/PRFscanplots/'):
+def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=300, fontsize=12, markersize=0.5, outdir='outputs/PRFscanplots/'):
   """
   Calculate metric for PRF scan
 
@@ -101,14 +101,19 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
   pixelSize : 2-tuple 
       Width of pixel to in each direction (as determined by mirror motion /
       look angle, not response / sensitivity)
+  figsize : 2-tuple
+      size of each subplot (width, height) in inches. A plot with four subplots
+      will be 4x this area, as each subplot will be figsize.
+  dpi : int
+      dots per inch for plots
   Plots : boolean
       Create diagnostic plots?
-  figsize : 2-tuple
-      width/height of diagnostic plots
-  dpi : int
-      dots-per-inch resolution of diagnostic plots
   fontsize : int
       size of plot fonts in pt
+  markersize : np.float64
+      size of markers in scatterplot
+  outdir : string
+      Location of output directory for plots
 
   Returns
   -------
@@ -134,7 +139,9 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
   plt.rcParams.update({'font.size': fontsize})
 
   if Plots:
-    fig,axs = plt.subplots(figsize=(20,20), dpi=300, nrows=2, ncols=2)
+    nrows   = 2
+    ncols   = 2
+    fig,axs = plt.subplots(figsize=(ncols*figsize[0],nrows*figsize[1]), dpi=dpi, nrows=nrows, ncols=ncols)
     print("plotting the distribution of values for each X scan")
     axs[0,0].plot(Xscans[:,:,1], Xscans[:,:,2], '.')
     axs[0,0].set_title("X scans distribution of values per scan")
@@ -164,8 +171,12 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     fig.clf()
 
     # allocating figures for scan-by-scan metric calibration
-    xfigs,xaxs = plt.subplots(figsize=(30,70), dpi=300, nrows=7, ncols=3)
-    zfigs,zaxs = plt.subplots(figsize=(30,40), dpi=300, nrows=4, ncols=3)
+    nrowsx     = 7
+    ncolsx     = 3
+    nrowsz     = 4
+    ncolsz     = 3
+    xfigs,xaxs = plt.subplots(figsize=(ncolsx*figsize[0],nrowsx*figsize[1]), dpi=dpi, nrows=nrowsx, ncols=ncolsx)
+    zfigs,zaxs = plt.subplots(figsize=(ncolsz*figsize[0],nrowsz*figsize[1]), dpi=dpi, nrows=nrowsz, ncols=ncolsz)
 
   # Allocate arrays to hold scan values shifted by one pixel left/right
   Lefts = np.zeros(Xscans[:,:,0].shape)
@@ -197,25 +208,25 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
       k = np.argmin(abs(Xscans[:,j,0]))
       l = np.argmin(Xscans[:,j,0])
       m = np.argmax(Xscans[:,j,0])
-      xaxs[int(j%7),int(j/7)].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value one pixel-width  left divided by value at this pixel position") 
-      xaxs[int(j%7),int(j/7)].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value one pixel-width right divided by value at this pixel position")
-      xaxs[int(j%7),int(j/7)].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r') 
-      xaxs[int(j%7),int(j/7)].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g')
-      xaxs[int(j%7),int(j/7)].plot(Xscans[:,j,0], Xscans[:,j,2], 'k.', label="Raw scan")
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value one pixel-width  left divided by value at this pixel position") 
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value one pixel-width right divided by value at this pixel position")
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r') 
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g')
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[:,j,0], Xscans[:,j,2], 'k.', label="Normalized flux of raw scan")
       # add vertical lines at nominal pixel boundaries
-      xaxs[int(j%7),int(j/7)].axvline(-pixelSize[0]/2, linestyle='dashed')
-      xaxs[int(j%7),int(j/7)].axvline( pixelSize[0]/2, linestyle='dashed')
+      xaxs[int(j%nrowsx),j//nrowsx].axvline(-pixelSize[0]/2, linestyle='dashed')
+      xaxs[int(j%nrowsx),j//nrowsx].axvline( pixelSize[0]/2, linestyle='dashed')
       # add horizontal line at unity (metric should be 1 at pixel boundary)
-      xaxs[int(j%7),int(j/7)].axhline(1,               linestyle='dashed')
+      xaxs[int(j%nrowsx),j//nrowsx].axhline(1,               linestyle='dashed')
       # titles and labels
-      xaxs[int(j%7),int(j/7)].set_title("Metrics along X scan number %d" %j)
-      xaxs[int(j%7),int(j/7)].set_xlabel("X position in brightest pixel")
-      xaxs[int(j%7),int(j/7)].set_ylabel("PRF (theoretical) pixel comparison metric value")
-      xaxs[int(j%7),int(j/7)].legend(loc=9)
+      xaxs[int(j%nrowsx),j//nrowsx].set_title("X scan %d" %j)
+      xaxs[int(j%nrowsx),j//nrowsx].set_xlabel("X position from centered in brightest pixel (mrad)")
+      xaxs[int(j%nrowsx),j//nrowsx].set_ylabel("Black: Flux, Ratio: (Flux one pixel width away, further from 0)/(Flux here)")
+      xaxs[int(j%nrowsx),j//nrowsx].legend(loc=9)
       # bound in x to slightly outside of pixel
-      xaxs[int(j%7),int(j/7)].set_xlim(-pixelSize[0]/2-.1, pixelSize[0]/2+.1)
+      #xaxs[int(j%nrowsx),j//nrowsx].set_xlim(-pixelSize[0]/2-.1, pixelSize[0]/2+.1)
       # bound in y to reasonable range
-      xaxs[int(j%7),int(j/7)].set_ylim(0,2)
+      xaxs[int(j%nrowsx),j//nrowsx].set_ylim(0,2)
 
   # Allocate arrays to hold scan values shifted by one pixel to up/down
   Ups   = np.zeros(Zscans[:,:,0].shape)
@@ -248,25 +259,25 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
       k = np.argmin(abs(Zscans[:,j,1]))
       l = np.argmin(Zscans[:,j,1])
       m = np.argmax(Zscans[:,j,1])
-      zaxs[int(j%4),int(j/4)].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value one pixel-height   up divided by value at this pixel position")
-      zaxs[int(j%4),int(j/4)].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value one pixel-height down divided by value at this pixel position")
-      zaxs[int(j%4),int(j/4)].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r')
-      zaxs[int(j%4),int(j/4)].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g')
-      zaxs[int(j%4),int(j/4)].plot(Zscans[:,j,1], Zscans[:,j,2], 'k.', label="Raw scan")
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value one pixel-height   up divided by value at this pixel position")
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value one pixel-height down divided by value at this pixel position")
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r')
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g')
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[:,j,1], Zscans[:,j,2], 'k.', label="Normalized flux of raw scan")
       # add vertical lines at nominal pixel boundaries
-      zaxs[int(j%4),int(j/4)].axvline(-pixelSize[1]/2, linestyle='dashed')
-      zaxs[int(j%4),int(j/4)].axvline( pixelSize[1]/2, linestyle='dashed')
+      zaxs[int(j%nrowsz),j//nrowsz].axvline(-pixelSize[1]/2, linestyle='dashed')
+      zaxs[int(j%nrowsz),j//nrowsz].axvline( pixelSize[1]/2, linestyle='dashed')
       # add horizontal line at unity (metric should be 1 at pixel boundary)
-      zaxs[int(j%4),int(j/4)].axhline(1,               linestyle='dashed')
+      zaxs[int(j%nrowsz),j//nrowsz].axhline(1,               linestyle='dashed')
       # titles and labels
-      zaxs[int(j%4),int(j/4)].set_title("Metrics along Z scan number %d" %j)
-      zaxs[int(j%4),int(j/4)].set_xlabel("Z position in brightest pixel")
-      zaxs[int(j%4),int(j/4)].set_ylabel("PRF (theoretical) pixel comparison metric value")
-      zaxs[int(j%4),int(j/4)].legend(loc=9)
+      zaxs[int(j%nrowsz),j//nrowsz].set_title("Z scan %d" %j)
+      zaxs[int(j%nrowsz),j//nrowsz].set_xlabel("Z position from centered in brightest pixel (mrad)")
+      zaxs[int(j%nrowsz),j//nrowsz].set_ylabel("Black: Flux, Ratio: (Flux one pixel width away, further from 0)/(Flux here)")
+      zaxs[int(j%nrowsz),j//nrowsz].legend(loc=9)
       # bound in x to slightly outside pixel
-      zaxs[int(j%4),int(j/4)].set_xlim(-pixelSize[1]/2-.1, pixelSize[1]/2+.1)
+      #zaxs[int(j%nrowsz),j//nrowsz].set_xlim(-pixelSize[1]/2-.1, pixelSize[1]/2+.1)
       # bound in y to reasonable range
-      zaxs[int(j%4),int(j/4)].set_ylim(0,2)
+      zaxs[int(j%nrowsz),j//nrowsz].set_ylim(0,2)
 
   if Plots:
     print("saving metric scan plots")
@@ -275,7 +286,9 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     xfigs.clf()
     zfigs.clf()
     print("creating pixel overview plots")
-    fig,axs = plt.subplots(figsize=(40,10), dpi=300, nrows=1, ncols=3)
+    nrows   = 1
+    ncols   = 3
+    fig,axs = plt.subplots(figsize=(ncols*figsize[0] + 10,nrows*figsize[1]), dpi=dpi, nrows=nrows, ncols=ncols)
 
     # pixel response heatmaps on the scanline positions
     im=axs[0].scatter(Xscans[:,:,0], Xscans[:,:,1], s=markersize, c=Xscans[:,:,2], cmap='viridis', norm=mpc.LogNorm())
