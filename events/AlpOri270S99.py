@@ -37,3 +37,4 @@ gamma    = 0.3
 figsize=(30,30)
 dpi=300
 fontsize=28
+prfplots=False
