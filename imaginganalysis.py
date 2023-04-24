@@ -65,6 +65,9 @@ else:
   mode        = "LoRes"
   print("Low-Resolution Frames")
 
+# read in prf scans and compute metric
+of.prfmetric('../data/PRFscans/makePRF270.sav', pixelSize=(0.25,0.5), Plots=prfplots, outdir='outputs/PRFscanplots/')
+
   #####################
   #  CREATE APERTURE  #
   #####################
@@ -177,7 +180,9 @@ for i in range(nconts):
       except:
         brightestPixel[j,:,i] = (np.where(smoothframes[j] == smoothframes[j].max())[0][0], np.where(smoothframes[j] == smoothframes[j].max())[1][0])
 
+  # transitionfinder finds when the mode of brightest pixels within timesteps +/- transwindow for each frame changes
   pixeltransitions[i]         = oF.transitionfinder(brightestPixel[:,:,i], transwindow)
+  # two pixel centering
   bettercenters[:,:,i]        = oF.twopixcenters(smoothframes, pixeltransitions[i], PRFfile, Xpixelwidth, Zpixelwidth)
 
 #####################

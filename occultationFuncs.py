@@ -201,6 +201,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
       xaxs[int(j%7),int(j/7)].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value one pixel-width right divided by value at this pixel position")
       xaxs[int(j%7),int(j/7)].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r') 
       xaxs[int(j%7),int(j/7)].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g')
+      xaxs[int(j%7),int(j/7)].plot(Xscans[:,j,0], Xscans[:,j,2], 'k.', label="Raw scan")
       # add vertical lines at nominal pixel boundaries
       xaxs[int(j%7),int(j/7)].axvline(-pixelSize[0]/2, linestyle='dashed')
       xaxs[int(j%7),int(j/7)].axvline( pixelSize[0]/2, linestyle='dashed')
@@ -214,7 +215,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
       # bound in x to slightly outside of pixel
       xaxs[int(j%7),int(j/7)].set_xlim(-pixelSize[0]/2-.1, pixelSize[0]/2+.1)
       # bound in y to reasonable range
-      xaxs[int(j%7),int(j/7)].set_ylim(0,12)
+      xaxs[int(j%7),int(j/7)].set_ylim(0,2)
 
   # Allocate arrays to hold scan values shifted by one pixel to up/down
   Ups   = np.zeros(Zscans[:,:,0].shape)
@@ -251,6 +252,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
       zaxs[int(j%4),int(j/4)].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value one pixel-height down divided by value at this pixel position")
       zaxs[int(j%4),int(j/4)].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r')
       zaxs[int(j%4),int(j/4)].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g')
+      zaxs[int(j%4),int(j/4)].plot(Zscans[:,j,1], Zscans[:,j,2], 'k.', label="Raw scan")
       # add vertical lines at nominal pixel boundaries
       zaxs[int(j%4),int(j/4)].axvline(-pixelSize[1]/2, linestyle='dashed')
       zaxs[int(j%4),int(j/4)].axvline( pixelSize[1]/2, linestyle='dashed')
@@ -264,7 +266,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
       # bound in x to slightly outside pixel
       zaxs[int(j%4),int(j/4)].set_xlim(-pixelSize[1]/2-.1, pixelSize[1]/2+.1)
       # bound in y to reasonable range
-      zaxs[int(j%4),int(j/4)].set_ylim(0,12)
+      zaxs[int(j%4),int(j/4)].set_ylim(0,2)
 
   if Plots:
     print("saving metric scan plots")
@@ -273,7 +275,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     xfigs.clf()
     zfigs.clf()
     print("creating pixel overview plots")
-    fig,axs = plt.subplots(figsize=(60,20), dpi=300, nrows=1, ncols=3)
+    fig,axs = plt.subplots(figsize=(40,10), dpi=300, nrows=1, ncols=3)
 
     # pixel response heatmaps on the scanline positions
     im=axs[0].scatter(Xscans[:,:,0], Xscans[:,:,1], s=markersize, c=Xscans[:,:,2], cmap='viridis', norm=mpc.LogNorm())
@@ -285,7 +287,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     axs[0].set_title("X and Z scan positions, with data gaps, overlaid on rectangle of nominal pixel size")
     axs[0].set_xlabel("X position of scans")
     axs[0].set_ylabel("Z position of scans")
-    axs[0].set_facecolor("xkcd:olive green")
+    axs[0].set_facecolor("k")#"xkcd:olive green")
     fig.colorbar(im, ax=axs[0])
 
     # Now, overall X metric (Lefts when Xpos < 0, else Rights)
@@ -298,7 +300,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     axs[1].set_title("X scan metric comparing to nearest adjacent pixel in X")
     axs[1].set_xlabel("X position of scans")
     axs[1].set_ylabel("Z position of scans")
-    axs[1].set_facecolor("xkcd:olive green")
+    axs[1].set_facecolor("k")#"xkcd:olive green")
     fig.colorbar(im, ax=axs[1])
 
     # and, finally, overall Z metric (similar)
@@ -311,7 +313,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(15,15), dpi=3
     axs[2].set_title("Z scan metric comparing to nearest adjacent pixel in Z")
     axs[2].set_xlabel("X position of scans")
     axs[2].set_ylabel("Z position of scans")
-    axs[2].set_facecolor("xkcd:olive green")
+    axs[2].set_facecolor("k")#"xkcd:olive green")
     fig.colorbar(im, ax=axs[2])
 
     fig.savefig('heatmaps.png')
