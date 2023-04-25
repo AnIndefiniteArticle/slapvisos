@@ -66,7 +66,7 @@ else:
   print("Low-Resolution Frames")
 
 # read in prf scans and compute metric
-of.prfmetric('../data/PRFscans/makePRF270.sav', pixelSize=(0.25,0.5), Plots=prfplots, outdir='outputs/PRFscanplots/')
+Xmetrics,Zmetrics = of.prfmetric('../data/PRFscans/makePRF270.sav', pixelSize=(Xpixelwidth,Zpixelwidth), Plots=prfplots, outdir='outputs/PRFscanplots/')
 
   #####################
   #  CREATE APERTURE  #
