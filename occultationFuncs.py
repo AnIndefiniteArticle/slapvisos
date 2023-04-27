@@ -202,16 +202,49 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
       else:
         k = np.argmin(abs(Right - Xscans[:,j,0]))
         Rights[i,j] = Xscans[k,j,2]/Xscans[i,j,2]
+    # For these scans, calibrate to correct up to 20 microradian spacecraft pointing errors
+    # on the left side of the pixel, find 2 X positions closest to pixel boundary
+    lftbnd = np.argmin(abs(Xscans[:,j,0] + pixelSize[0]/2))
+    lftbnd = np.argmin(abs(Rights[lftbnd-10:lftbnd+10,j] - 1)) + (lftbnd-10)
+    if Xscans[lftbnd,j,0] < -pixelSize[0]/2:
+      lftbnd2 = np.argmax(Xscans[lftbnd-1:lftbnd+2,j,0]) + (lftbnd-1)
+    else:
+      lftbnd2 = np.argmin(Xscans[lftbnd-1:lftbnd+2,j,0]) + (lftbnd-1)
+    # on a line between them, find where y=1
+    lfty1 = Xscans[lftbnd,j,0] + (1-Rights[lftbnd,j])*(Xscans[lftbnd,j,0] - Xscans[lftbnd2,j,0])/ \
+                                                      (Rights[lftbnd,j]   - Rights[lftbnd2,j])
+    # repeat for right side
+    rgtbnd = np.argmin(abs(Xscans[:,j,0] - pixelSize[0]/2))
+    lftbnd = np.argmin(abs(Lefts[rgtbnd-10:rgtbnd+10,j] - 1)) + (rgtbnd-10)
+    if Xscans[rgtbnd,j,0] < pixelSize[0]/2:
+      rgtbnd2 = np.argmax(Xscans[rgtbnd-1:rgtbnd+2,j,0]) + (rgtbnd-1)
+    else:
+      rgtbnd2 = np.argmin(Xscans[rgtbnd-1:rgtbnd+2,j,0]) + (rgtbnd-1)
+    # on a line between them, find where y=1
+    rgty1 = Xscans[rgtbnd,j,0] + (1-Lefts[rgtbnd,j])*(Xscans[rgtbnd,j,0] - Xscans[rgtbnd2,j,0])/ \
+                                                      (Lefts[rgtbnd,j]   -  Lefts[rgtbnd2,j])
+    # split difference of left and right shifts, but plot both!
+    lftshft = (-pixelSize[0]/2 - lfty1)
+    rgtshft = ( pixelSize[0]/2 - rgty1)
+    shift   = np.mean((lftshft,rgtshft))
+    print("scan %d, shift: %f, right: %f, left: %f" %(j,shift,lftshft,rgtshft))
+    Xscans[:,j,0] += shift
+    # Plot it all!
     if Plots:
       print("plotting X-scan %d"%j)
       # plot X scan metrics vs X positions
       k = np.argmin(abs(Xscans[:,j,0]))
       l = np.argmin(Xscans[:,j,0])
       m = np.argmax(Xscans[:,j,0])
-      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value one pixel-width  left divided by value at this pixel position") 
-      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value one pixel-width right divided by value at this pixel position")
+      # dots and labels
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value of pixel with same PRF on the right divided by value at this pixel position") 
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value of pixel with same PRF on the  left divided by value at this pixel position")
+      # lines connecting
       xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r') 
       xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g')
+      # shift markers
+      xaxs[int(j%nrowsx),j//nrowsx].plot([-pixelSize[0]/2 - shift, pixelSize[0]/2 - shift], [1,1], 'mX', label="location of y=1 crossing before centering fix of %f mrad"%shift)
+      # normalized flux for comparison
       xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[:,j,0], Xscans[:,j,2], 'k.', label="Normalized flux of raw scan")
       # add vertical lines at nominal pixel boundaries
       xaxs[int(j%nrowsx),j//nrowsx].axvline(-pixelSize[0]/2, linestyle='dashed')
@@ -259,8 +292,8 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
       k = np.argmin(abs(Zscans[:,j,1]))
       l = np.argmin(Zscans[:,j,1])
       m = np.argmax(Zscans[:,j,1])
-      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value one pixel-height   up divided by value at this pixel position")
-      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value one pixel-height down divided by value at this pixel position")
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value of pixel with same PRF below divided by value at this pixel position")
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value of pixel with same PRF above divided by value at this pixel position")
       zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r')
       zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g')
       zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[:,j,1], Zscans[:,j,2], 'k.', label="Normalized flux of raw scan")
@@ -281,8 +314,8 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
 
   if Plots:
     print("saving metric scan plots")
-    xfigs.savefig("xscanmetrics.png")
-    zfigs.savefig("zscanmetrics.png")
+    xfigs.savefig(outdir+"xscanmetrics.png")
+    zfigs.savefig(outdir+"zscanmetrics.png")
     xfigs.clf()
     zfigs.clf()
     print("creating pixel overview plots")
@@ -329,7 +362,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
     axs[2].set_facecolor("k")#"xkcd:olive green")
     fig.colorbar(im, ax=axs[2])
 
-    fig.savefig('heatmaps.png')
+    fig.savefig(outdir+'heatmaps.png')
 
   # stack up the relevant arrays in the form we want
   Xscanmetrics = np.stack((XscanXs, XscanZs, XscanVal,  Lefts, Rights), axis=2)
