@@ -422,7 +422,7 @@ def twopixcenters(data, transitions, PRFfile, Xwidth, Zwidth):
 
     Ximagemetric = (frames[i][compareZ,compareX]) / frames[i][currentZ,currentX] #frames[i].max()
     # using the scan at index 7
-    Xscansmetric = np.roll(XscanVal[:,11], (-1**(Left+1))*284) / XscanVal[:,11]
+    #Xscansmetric = np.roll(XscanVal[:,11], (-1**(Left+1))*284) / XscanVal[:,11]
     
     if Left:
       Xmetriccompare = (Ximagemetric - Xscansmetric[142:284])**2

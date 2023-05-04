@@ -66,7 +66,7 @@ else:
   print("Low-Resolution Frames")
 
 # read in prf scans and compute metric
-Xmetrics,Zmetrics = of.prfmetric('../data/PRFscans/makePRF270.sav', pixelSize=(Xpixelwidth,Zpixelwidth), Plots=prfplots, outdir='outputs/PRFscanplots/')
+Xmetrics,Zmetrics = oF.prfmetric('../data/PRFscans/makePRF270.sav', pixelSize=(Xpixelwidth,Zpixelwidth), Plots=prfplots, outdir='outputs/PRFscanplots/')
 
   #####################
   #  CREATE APERTURE  #
@@ -102,7 +102,7 @@ print("Performing background corrections")
 #cubdata -= cubdata.min()
 
 # flatfield is corrected first
-flatcor = oF.flatField(cubdata, flatfield, mode, outdir)
+#flatcor = oF.flatField(cubdata, flatfield, mode, outdir)
 # vims flatfield seems to already be corrected out
 
 # Subtract spatial background gradient
@@ -130,6 +130,8 @@ for i in range(nconts):
 
   # Create frames by summing over desired wavelength channels
   frames  = cordata[:,continuum].sum(axis=1)
+  #frames  = cubdata[:,continuum].sum(axis=1)
+  
 
   #####################
   # MAKE SUMMED FRAME #
@@ -179,9 +181,9 @@ for i in range(nconts):
         brightestPixel[j,:,i] = np.where(smoothframes[j] == smoothframes[j].max())
       except:
         brightestPixel[j,:,i] = (np.where(smoothframes[j] == smoothframes[j].max())[0][0], np.where(smoothframes[j] == smoothframes[j].max())[1][0])
-
   # transitionfinder finds when the mode of brightest pixels within timesteps +/- transwindow for each frame changes
   pixeltransitions[i]         = oF.transitionfinder(brightestPixel[:,:,i], transwindow)
+"""
   # two pixel centering
   bettercenters[:,:,i]        = oF.twopixcenters(smoothframes, pixeltransitions[i], PRFfile, Xpixelwidth, Zpixelwidth)
 
@@ -372,5 +374,5 @@ if movies:
     plt.savefig(outdir+"/spectra/spectra%04d.png"%(j))
     plt.clf()
     plt.close()
-
+"""
 print("./analysis.py complete")

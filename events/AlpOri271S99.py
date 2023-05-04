@@ -18,8 +18,8 @@ starpixy = (0,4)
 slope    =  5.69 # urad/cube
 offset   = -5    # mrad
 # Debugging
-backgroundcheck = True
-skipcol1        = True
+backgroundcheck = False
+skipcol1        = False
 # Spatial Background
 spaback  = "Additive" #"Sensitivity" # "Additive"
 # clipping and binning
