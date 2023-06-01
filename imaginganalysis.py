@@ -21,8 +21,8 @@ import sys
 try:
   outdir = sys.argv[1]
 except:
-  print("invalid output directory (passed as first and only argument)")
-  sys.exit(1)
+  print("WARNING: running outside of wrapper function, attempting output to occname parent directory")
+  outdir = "outputs/" + occname + "/"
 
 # Welcome Message
 print("\nBeginning analysis of "+occname+"\n")
