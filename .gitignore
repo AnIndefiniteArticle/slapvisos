@@ -1,7 +1,16 @@
-*.npy
-__pycache__
+# this code
 figs*
-.ipynb*
 venv
 outputs
+# python
+*.npy
+__pycache__
+.ipynb*
+# vim
 *.swp
+# latex 
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
