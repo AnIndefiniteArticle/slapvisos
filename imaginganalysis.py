@@ -46,11 +46,11 @@ width    = shape[2]
 maxpix   = np.max((height,width))
 # Read in data, or load from save file
 try:
-  cubdata = np.load("outputs/"+occname+"/"+occname+"data.npy")
+  cubdata = np.load(outdir+"/"+occname+"data.npy")
   print("loaded previous save file")
 except:
   cubdata = oF.readVIMSimaging(cubdir, cubfiles, ncubs, nspec, height, width, visible)
-  np.save("outputs/"+occname+"/"+occname+"data.npy", cubdata)
+  np.save(outdir+"/"+occname+"data.npy", cubdata)
 
 # Get pixel dimensions
 if ps.CubeFile(cubdir+cubfiles[0]).label['IsisCube']['Instrument']['SamplingMode'] == 'HI-RES':
@@ -75,6 +75,7 @@ Xmetrics,Zmetrics = oF.prfmetric('../data/PRFscans/makePRF270.sav', pixelSize=(X
 # Square aperture set by starpix variable in config file
 aper = np.zeros(cubdata.shape) 
 aper[:,:,starpixy[0]:starpixy[1], starpixx[0]:starpixx[1]] += 1
+# for "pan handle"
 #aper[:,:,2] = 1
 
   #####################

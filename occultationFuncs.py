@@ -231,7 +231,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
     lftshft = (-pixelSize[0]/2 - lfty1)
     rgtshft = ( pixelSize[0]/2 - rgty1)
     shift   = np.mean((lftshft,rgtshft))
-    print("scan %d, shift: %f, right: %f, left: %f" %(j,shift,lftshft,rgtshft))
+    #print("scan %d, shift: %f, right: %f, left: %f" %(j,shift,lftshft,rgtshft))
     Xscans[:,j,0] += shift
     # Plot it all!
     if Plots:
