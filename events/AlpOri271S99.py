@@ -3,7 +3,7 @@
 import numpy as np
 occname  = "AlpOri271S99"
 # What are the wavelengths?
-lambdas  = np.loadtxt('/data/vimsSaturnOccs/data/lambda.txt')[-256:]
+lambdas  = np.loadtxt('../data/lambda.txt')[-256:]
 # Location of Files
 cubdir   = "../data/cubs/"+occname+"/"
 cubfiles = open(cubdir+'/cubs.txt').read().splitlines()
@@ -18,8 +18,8 @@ starpixy = (0,4)
 slope    =  5.69 # urad/cube
 offset   = -5    # mrad
 # Debugging
-backgroundcheck = True
-skipcol1        = True
+backgroundcheck = False
+skipcol1        = False
 # Spatial Background
 spaback  = "Additive" #"Sensitivity" # "Additive"
 # clipping and binning
@@ -37,3 +37,4 @@ gamma    = 0.3
 figsize=(30,30)
 dpi=300
 fontsize=28
+prfplots=False

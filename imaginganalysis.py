@@ -13,7 +13,6 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from scipy.io import readsav
 import occultationFuncs as oF
 from config import *
 import sys
@@ -22,8 +21,8 @@ import sys
 try:
   outdir = sys.argv[1]
 except:
-  print("invalid output directory (passed as first and only argument)")
-  sys.exit(1)
+  print("WARNING: running outside of wrapper function, attempting output to occname parent directory")
+  outdir = "outputs/" + occname + "/"
 
 # Welcome Message
 print("\nBeginning analysis of "+occname+"\n")
@@ -66,14 +65,8 @@ else:
   mode        = "LoRes"
   print("Low-Resolution Frames")
 
-# read in PRF Scans
-PRFs     = readsav(PRFfile)
-XscanVal = PRFs['PRF1']
-XscanXs  = PRFs['XPOS1']
-XscanZs  = PRFs['ZPOS1']
-ZscanVal = PRFs['PRF2']
-ZscanXs  = PRFs['XPOS2']
-ZscanZs  = PRFs['ZPOS2']
+# read in prf scans and compute metric
+Xmetrics,Zmetrics = oF.prfmetric('../data/PRFscans/makePRF270.sav', pixelSize=(Xpixelwidth,Zpixelwidth), Plots=prfplots, outdir='outputs/PRFscanplots/')
 
   #####################
   #  CREATE APERTURE  #
@@ -109,7 +102,7 @@ print("Performing background corrections")
 #cubdata -= cubdata.min()
 
 # flatfield is corrected first
-flatcor = oF.flatField(cubdata, flatfield, mode, outdir)
+#flatcor = oF.flatField(cubdata, flatfield, mode, outdir)
 # vims flatfield seems to already be corrected out
 
 # Subtract spatial background gradient
@@ -137,6 +130,8 @@ for i in range(nconts):
 
   # Create frames by summing over desired wavelength channels
   frames  = cordata[:,continuum].sum(axis=1)
+  #frames  = cubdata[:,continuum].sum(axis=1)
+  
 
   #####################
   # MAKE SUMMED FRAME #
@@ -186,9 +181,11 @@ for i in range(nconts):
         brightestPixel[j,:,i] = np.where(smoothframes[j] == smoothframes[j].max())
       except:
         brightestPixel[j,:,i] = (np.where(smoothframes[j] == smoothframes[j].max())[0][0], np.where(smoothframes[j] == smoothframes[j].max())[1][0])
-
+  # transitionfinder finds when the mode of brightest pixels within timesteps +/- transwindow for each frame changes
   pixeltransitions[i]         = oF.transitionfinder(brightestPixel[:,:,i], transwindow)
-  bettercenters[:,:,i]        = oF.twopixcenters(smoothframes, pixeltransitions[i], PRFs, Xpixelwidth, Zpixelwidth)
+"""
+  # two pixel centering
+  bettercenters[:,:,i]        = oF.twopixcenters(smoothframes, pixeltransitions[i], PRFfile, Xpixelwidth, Zpixelwidth)
 
 #####################
 #       PLOTS       #
@@ -377,5 +374,5 @@ if movies:
     plt.savefig(outdir+"/spectra/spectra%04d.png"%(j))
     plt.clf()
     plt.close()
-
+"""
 print("./analysis.py complete")
