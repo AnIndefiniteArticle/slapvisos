@@ -147,24 +147,28 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
     axs[0,0].set_title("X scans distribution of values per scan")
     axs[0,0].set_ylabel("Normalized pixel response")
     axs[0,0].set_xlabel("Z position of X scans")
+    axs[0,0].set_yscale("log")
 
     print("plotting the distribution of values for each Z scan")
     axs[0,1].plot(Zscans[:,:,0], Zscans[:,:,2], '.')
     axs[0,1].set_title("Z scans distribution of values per scan")
     axs[0,1].set_ylabel("Normalized pixel response")
     axs[0,1].set_xlabel("X position of Z scans")
+    axs[0,1].set_yscale("log")
 
     print("plotting X scans vs X position")
     axs[1,0].plot(Xscans[:,:,0], Xscans[:,:,2], '.')
     axs[1,0].set_title("X scans pixel response with X")
     axs[1,0].set_ylabel("Normalized pixel response")
     axs[1,0].set_xlabel("X position in X scans")
+    axs[1,0].set_yscale("log")
 
     print("plotting Z scans vs Z position")
     axs[1,1].plot(Zscans[:,:,1], Zscans[:,:,2], '.')
     axs[1,1].set_title("Z scans pixel response with Z")
     axs[1,1].set_ylabel("Normalized pixel response")
     axs[1,1].set_xlabel("Z position in Z scans")
+    axs[1,1].set_yscale("log")
 
     # saving
     fig.savefig(outdir+"scanlines.png")
@@ -237,20 +241,25 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
       l = np.argmin(Xscans[:,j,0])
       m = np.argmax(Xscans[:,j,0])
       # dots and labels
-      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value of pixel with same PRF on the right divided by value at this pixel position") 
-      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value of pixel with same PRF on the  left divided by value at this pixel position")
+      #xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r.') 
+      #xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g.')
       # lines connecting
-      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r') 
-      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g')
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r', label="Value of pixel with same PRF on the right divided by value at this pixel position") 
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g', label="Value of pixel with same PRF on the  left divided by value at this pixel position")
       # shift markers
       xaxs[int(j%nrowsx),j//nrowsx].plot([-pixelSize[0]/2 - shift, pixelSize[0]/2 - shift], [1,1], 'mX', label="location of y=1 crossing before centering fix of %f mrad"%shift)
-      # normalized flux for comparison
+      # normalized flux of main pixel
       xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[:,j,0], Xscans[:,j,2], 'k.', label="Normalized flux of raw scan")
+      # normalized flux of comparison pixels
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[:,j,0]+pixelSize[0], Xscans[:,j,2], 'r.', label="right comparison pixel flux", alpha=0.1)
+      xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[:,j,0]-pixelSize[0], Xscans[:,j,2], 'g.', label= "left comparison pixel flux", alpha=0.1)
       # add vertical lines at nominal pixel boundaries
       xaxs[int(j%nrowsx),j//nrowsx].axvline(-pixelSize[0]/2, linestyle='dashed')
       xaxs[int(j%nrowsx),j//nrowsx].axvline( pixelSize[0]/2, linestyle='dashed')
       # add horizontal line at unity (metric should be 1 at pixel boundary)
       xaxs[int(j%nrowsx),j//nrowsx].axhline(1,               linestyle='dashed')
+      # and another at 0.5 (each pixel should be at 0.5 at boundary if no flux lost)
+      xaxs[int(j%nrowsx),j//nrowsx].axhline(0.5,             linestyle='dashed')
       # titles and labels
       xaxs[int(j%nrowsx),j//nrowsx].set_title("X scan %d" %j)
       xaxs[int(j%nrowsx),j//nrowsx].set_xlabel("X position from centered in brightest pixel (mrad)")
@@ -259,7 +268,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
       # bound in x to slightly outside of pixel
       #xaxs[int(j%nrowsx),j//nrowsx].set_xlim(-pixelSize[0]/2-.1, pixelSize[0]/2+.1)
       # bound in y to reasonable range
-      xaxs[int(j%nrowsx),j//nrowsx].set_ylim(0,2)
+      xaxs[int(j%nrowsx),j//nrowsx].set_yscale("log")
 
   # Allocate arrays to hold scan values shifted by one pixel to up/down
   Ups   = np.zeros(Zscans[:,:,0].shape)
@@ -292,16 +301,24 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
       k = np.argmin(abs(Zscans[:,j,1]))
       l = np.argmin(Zscans[:,j,1])
       m = np.argmax(Zscans[:,j,1])
-      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r.', label="Value of pixel with same PRF below divided by value at this pixel position")
-      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g.', label="Value of pixel with same PRF above divided by value at this pixel position")
-      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r')
-      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g')
+      # dots and labels
+      #zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r.')
+      #zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g.')
+      # lines connecting
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r', label="Value of pixel with same PRF below divided by value at this pixel position")
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g', label="Value of pixel with same PRF above divided by value at this pixel position")
+      # normalized flux of main pixel
       zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[:,j,1], Zscans[:,j,2], 'k.', label="Normalized flux of raw scan")
+      # normalized flux of comparison pixels
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[:,j,1]+pixelSize[1], Zscans[:,j,2], 'r.', label="down comparison pixel flux", alpha=0.1)
+      zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[:,j,1]-pixelSize[1], Zscans[:,j,2], 'g.', label=  "up comparison pixel flux", alpha=0.1)
       # add vertical lines at nominal pixel boundaries
       zaxs[int(j%nrowsz),j//nrowsz].axvline(-pixelSize[1]/2, linestyle='dashed')
       zaxs[int(j%nrowsz),j//nrowsz].axvline( pixelSize[1]/2, linestyle='dashed')
       # add horizontal line at unity (metric should be 1 at pixel boundary)
       zaxs[int(j%nrowsz),j//nrowsz].axhline(1,               linestyle='dashed')
+      # and another at 0.5 (each pixel should be at 0.5 at boundary if no flux lost)
+      zaxs[int(j%nrowsz),j//nrowsz].axhline(0.5,             linestyle='dashed')
       # titles and labels
       zaxs[int(j%nrowsz),j//nrowsz].set_title("Z scan %d" %j)
       zaxs[int(j%nrowsz),j//nrowsz].set_xlabel("Z position from centered in brightest pixel (mrad)")
@@ -310,7 +327,7 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
       # bound in x to slightly outside pixel
       #zaxs[int(j%nrowsz),j//nrowsz].set_xlim(-pixelSize[1]/2-.1, pixelSize[1]/2+.1)
       # bound in y to reasonable range
-      zaxs[int(j%nrowsz),j//nrowsz].set_ylim(0,2)
+      zaxs[int(j%nrowsz),j//nrowsz].set_yscale("log")
 
   if Plots:
     print("saving metric scan plots")
