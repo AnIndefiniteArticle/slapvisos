@@ -498,6 +498,10 @@ def transitionfinder(brightestPixel, window):
   return transitions
 
 def bintoscan(nframes, transitions):
+  """
+  bins rough star positions in one dimension to the scanline numbers in the perpendicular direction
+  TODO: currently only bins to Z-scanlines from rough X position
+  """
   scan = np.zeros(nframes)
   scan[:transitions[1][0]] = 5
   step = 1
@@ -559,7 +563,7 @@ def findthestar(cubdata, specwin, smoothwin=20, transwin=20):
 
   # center-find in Z
 
-  return smoothmono, maxcoords, Xtransitions, Zscan, Zcenters
+  return smoothmono, maxcoords, Xtransitions, Zscan
 
   # bin Z-position to closest X-scan
 
