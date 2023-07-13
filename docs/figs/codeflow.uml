@@ -1,0 +1,33 @@
+@startuml
+
+title "quick flow of current code"
+
+start
+:read in data;
+:observe observation metadata;
+:allocate data structures;
+:create aperture (from config file);
+if (cube header declares resolution mode) then (select hires flatfield)
+else (select lowres flatfield)
+endif
+:correct out flat field with flatField(cubdata, flatfield, mode);
+if (spatial correction type) then (additive)
+  :run spatialBackgroundSensitivity(cubdata,zoomax,-1);
+else (sensitivity)
+  :run spatialBackgroundSignal(cubdata,zoomax,-1);
+endif
+:remove temporal background with temporalBackground(spatcor, starpixx, starpixy, aper, normclip, zoomin);
+:perform following center-finding loop for each bandpass;
+repeat
+  :sum over bandpass;
+  :make "summed frame" to look for errors in background correction;
+  :boxcar smooth frames over time dimension (improve SNR for center finding);
+  :brightest pixel centering (rough centering, refining in next steps);
+  :run transitionFinder(brightestPixels, transwindow) to calculate when pixel transitions take place;
+  :run twopixcenters(smoothframes, pixeltransitions, PRFs, Xpixelwidth, Zpixelwidth) to calculate bettercenters;
+  :generate plots;
+repeat while (next bandpass?) is (yes)
+->no;
+stop
+
+@enduml
