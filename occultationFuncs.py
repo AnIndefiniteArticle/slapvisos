@@ -387,19 +387,6 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
   # and return them
   return Xscanmetrics, Zscanmetrics
 
-def transitionfinder(brightestPixel, window, Xpositive = True, Zpositive = True):
-  # for each time step in a list of brightest pixels per timestep per wavelength
-  for i in range(len(brightestPixel)):
-    # calculate the mode within a window of +/- window indices from the current timestep, clipped by the ends of the array instead of wrapping
-    mode = stats.mode(brightestPixel[np.max((i-window,0)):np.min((i+window,len(brightestPixel)))])
-    # If it's the first entry, or if both the new mode is new AND represents over half of the array, add a new transition point
-    if i == 0:
-      transitions = np.array([[i, mode[0][0][0], mode[0][0][1]]])
-    elif (mode[0][0][0] != transitions[-1][1] or mode[0][0][1] != transitions[-1][2]) and np.any(mode[1] > window):
-      transitions = np.append(transitions, np.array([[i, mode[0][0][0], mode[0][0][1]]]), axis=0)
-
-  return transitions
-
 def twopixcenters(data, transitions, PRFfile, Xwidth, Zwidth):
   frames   = data / data.max()
   centers  = np.zeros((len(frames),2))
@@ -462,3 +449,120 @@ def twopixcenters(data, transitions, PRFfile, Xwidth, Zwidth):
     centers[i,1] = currentX + Xcorr
 
   return centers#, metricreturns
+
+def argmax_lastNaxes(A, N):
+    """
+    Stolen from stackoverflow, with slight modification, here:
+    https://stackoverflow.com/questions/30589211/numpy-argmax-over-multiple-axes-without-loop
+    uses argmax to find the maximum location in each frame
+    
+    Parameters
+    ----------
+    A : ndarray
+        array to find the maximum indices of
+    N : int
+        number of axes at the end of the array's shape to argmax over
+    Returns
+    ----------
+    max_idx : ndarray
+        N-dimensional array (where N is input parameter) of indices in A's last N dimensions where A is maximized
+        e.g. if A's shape is (framenumber, columns, rows), and N=2, max_idx will be an array of the rows and columns where each frame is maximum
+    """
+    s = A.shape
+    new_shp = s[:-N] + (np.prod(s[-N:]),)
+    max_idx = A.reshape(new_shp).argmax(-1)
+    return np.stack(np.unravel_index(max_idx, s[-N:]))
+
+def rolling_average(stretched, window):
+  """
+  TODO: this is a basic rolling average, but does NOT preserve frame number!!!
+  I'll need to fix this up later, but not right now
+  """
+  return np.lib.stride_tricks.sliding_window_view(stretched, window, axis=0).mean(axis=-1)
+
+def transitionfinder(brightestPixel, window):
+  """
+  TODO: make this work with rolling_average once that preserves frame number!
+  """
+  # for each time step in a list of brightest pixels per timestep per wavelength
+  for i in range(len(brightestPixel)):
+    # calculate the mode within a window of +/- window indices from the current timestep, clipped by the ends of the array instead of wrapping
+    mode = stats.mode(brightestPixel[np.max((i-window,0)):np.min((i+window,len(brightestPixel)))], keepdims=False)
+    # If it's the first entry, or if both the new mode is new AND represents over half of the array, add a new transition point
+    if i == 0:
+      transitions = np.array([[i, mode[0], mode[1]]])
+    # only add a new transition point if the new mode is adjacent to the previous one, and fills more than half of the array.
+    elif (mode[0] == transitions[-1][1]+1 or mode[0] == transitions[-1][1]-1) and mode[1] > window:
+      transitions = np.append(transitions, np.array([[i, mode[0], mode[1]]]), axis=0)
+
+  return transitions
+
+def bintoscan(nframes, transitions):
+  scan = np.zeros(nframes)
+  scan[:transitions[1][0]] = 5
+  step = 1
+  for i in range(transitions[1][0], nframes):
+    if i > transitions[step+1][0]:
+      step += 1
+    if step == len(transitions)-1:
+      scan[i:] = 4
+      break
+    left   = transitions[step][0]
+    right  = transitions[step+1][0]
+    center = (left + right)/2
+    if abs(i-left) < abs(i-center):
+      scan[i] = 4
+    elif abs(i-center) < abs(i-right):
+      scan[i] = 5
+    else:
+      scan[i] = 6
+  return scan
+
+def findthestar(cubdata, specwin, smoothwin=20, transwin=20):
+  """
+  Finds the location of the "star" (brightest pixel) in each frame of cubdata,
+  spectrally monochromized, stretched by squaring, with a rolling average in
+  frame number of size `smoothwin`
+
+  Parameters
+  ----------
+  cubdata : ndarray
+      ndarray of shape (framenumber, spectral index, columns, rows)
+  specwin : tuple
+      spectral window to sum over (min, max), in indices space, not wavelength space
+      TODO: enable specifying wavelength space
+  smoothwin : int
+      number of frames to perform rolling average over
+  transwin : int
+      number of frames to perform transition mode calculation over
+  """
+  # remove last eight spectral channels (full of -8192), and average over the rest
+  print("smoothing input data over spectral window")
+  smoothmono = cubdata[:,specwin[0]:specwin[1]].mean(axis=1)
+  # subtract the minimum out (make everything positive)
+  print("subtracting minimum to make everything positive")
+  smoothmono -= smoothmono.min()
+  # take rolling average
+  print("taking the rolling average")
+  smoothmono = rolling_average(smoothmono, smoothwin)
+
+  # find brightest pixels in each frame
+  print("finding the brightest pixels in each frame")
+  maxcoords = argmax_lastNaxes(smoothmono, 2)
+
+  # find transition frames in X
+  print("finding the transition frames in X")
+  Xtransitions = transitionfinder(maxcoords[1], transwin)
+
+  # bin X-position along line to closest Z-scan
+  Zscan = bintoscan(len(smoothmono), Xtransitions)
+
+  # center-find in Z
+
+  return smoothmono, maxcoords, Xtransitions, Zscan, Zcenters
+
+  # bin Z-position to closest X-scan
+
+  # center-find in X
+
+  # make plots!
