@@ -233,13 +233,16 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
     shift   = np.mean((lftshft,rgtshft))
     #print("scan %d, shift: %f, right: %f, left: %f" %(j,shift,lftshft,rgtshft))
     Xscans[:,j,0] += shift
+    # set to nan if on wrong side of pixel
+    k = np.argmin(abs(Xscans[:,j,0]))
+    l = np.argmin(Xscans[:,j,0])
+    m = np.argmax(Xscans[:,j,0])
+    Lefts[ np.min((l,k)):np.max((l,k)),j]=np.nan
+    Rights[np.min((k,m)):np.max((k,m)),j]=np.nan
     # Plot it all!
     if Plots:
       print("plotting X-scan %d"%j)
       # plot X scan metrics vs X positions
-      k = np.argmin(abs(Xscans[:,j,0]))
-      l = np.argmin(Xscans[:,j,0])
-      m = np.argmax(Xscans[:,j,0])
       # dots and labels
       #xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((k,m)):np.max((k,m)),j,0],  Lefts[np.min((k,m)):np.max((k,m)),j], 'r.') 
       #xaxs[int(j%nrowsx),j//nrowsx].plot(Xscans[np.min((l,k)):np.max((l,k)),j,0], Rights[np.min((l,k)):np.max((l,k)),j], 'g.')
@@ -298,6 +301,13 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
 
     # Calculate 3-pixel metric
     Boths[:,j] = Ups[:,j] - Downs[:,j]
+
+    # set to nan if on wrong side of pixel
+    k = np.argmin(abs(Xscans[:,j,0]))
+    l = np.argmin(Xscans[:,j,0])
+    m = np.argmax(Xscans[:,j,0])
+    Ups[  np.min((l,k)):np.max((l,k)),j]=np.nan
+    Downs[np.min((k,m)):np.max((k,m)),j]=np.nan
 
     if Plots:
       print("plotting Z-scan %d"%j)
