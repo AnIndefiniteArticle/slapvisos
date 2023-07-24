@@ -312,9 +312,6 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
     if Plots:
       print("plotting Z-scan %d"%j)
       # plot Z scan metrics vs Z positions
-      k = np.argmin(abs(Zscans[:,j,1]))
-      l = np.argmin(Zscans[:,j,1])
-      m = np.argmax(Zscans[:,j,1])
       # dots and labels
       #zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((k,m)):np.max((k,m)),j,1],   Ups[np.min((k,m)):np.max((k,m)),j], 'r.')
       #zaxs[int(j%nrowsz),j//nrowsz].plot(Zscans[np.min((l,k)):np.max((l,k)),j,1], Downs[np.min((l,k)):np.max((l,k)),j], 'g.')
@@ -683,7 +680,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=20, transwin=20,
   rows = np.take_along_axis(smoothmono,np.array([[Zbrights]]).transpose(),1)
   # 2-pixel center correction in X
   #Xcorr, scanmetrics, imagemetrics  = twopix(rows, maxcoords[1], (maxcoords[1] + Xcompares)%15, Xscans, Xmetrics[209:359]) #+ pixelSize[0]/2
-  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], comparisonsmooth) #+ pixelSize[0]/2
+  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:359], comparisonsmooth) #[200:370]
 
   # combine centers with corrections
   Xcorr += pixelSize[0]/2
@@ -774,6 +771,7 @@ def twopix(rows, brights, compares, scans, metrics, comparisonsmooth=10):
     integers are on pixel boundaries
     values between 0 and 1, distance between integer values
   """
+  #scans = np.array([9]*len(scans))
   # calculate imagemetric
   print('row shape', rows.shape)
   bripix = np.take_along_axis(rows[:,0,:],np.array([brights, ]).transpose(), 1)
