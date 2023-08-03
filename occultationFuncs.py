@@ -599,7 +599,7 @@ def bintoXscan(subpixel, scans):
   # return this array of scan numbers
   return scans
 
-def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=20, transwin=20, pixelSize=(0.25,0.5), comparisonsmooth=10):
+def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=10, transwin=10, pixelSize=(0.25,0.5), comparisonsmooth=10):
   """
   Finds the location of the "star" (brightest pixel) in each frame of cubdata,
   spectrally monochromized, stretched by squaring, with a rolling average in
@@ -611,11 +611,19 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=20, transwin=20,
       ndarray of shape (framenumber, spectral index, columns, rows)
   specwin   : tuple
       spectral window to sum over (min, max), in indices space, not wavelength space
-      TODO: enable specifying wavelength space
+      TODO: enable specifying in wavelength space
+  Xmetrics  : ndarray
+      output of prfmetric()
+  Zmetrics  : ndarray
+      output of prfmetric()
   smoothwin : int
       number of frames to perform rolling average over
   transwin  : int
       number of frames to perform transition mode calculation over
+  pixelSize : 2-tuple
+      size of pixel in miliradians, default is VIMS HiRes mode
+  comparisonsmooth : int
+    number of frames over which to smooth in chi-squared space
   """
   # remove last eight spectral channels (full of -8192), and average over the rest
   print("smoothing input data over spectral window")
@@ -763,6 +771,8 @@ def twopix(rows, brights, compares, scans, metrics, comparisonsmooth=10):
   metrics : 2D array
     one of the metric arrays output from the prfmetric function
     [:,:,0] is positions, [:,:,3] is negative, [:,:,4] is positive
+  comparisonsmooth : int
+    number of frames over which to smooth in chi-squared space
 
   Returns
   ----------
