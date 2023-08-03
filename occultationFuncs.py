@@ -424,69 +424,6 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
   # and return them
   return Xscanmetrics, Zscanmetrics
 
-def twopixcenters(data, transitions, PRFfile, Xwidth, Zwidth):
-  frames   = data / data.max()
-  centers  = np.zeros((len(frames),2))
-  #metricreturns = np.zeros((len(frames), 142))
-  
-  step = 0
-  for i in range(len(frames)):
-    # increment steps with transitions
-    if step < len(transitions)-1 and transitions[step+1][0] == i:
-      step += 1
-
-    # declare current pixel
-    currentX = transitions[step][2]
-    currentZ = transitions[step][1]
-
-    # Determine whether to compare to transition before or after current one
-    #if step == 0:
-    #  centers[i,0] = currentZ
-    #  centers[i,1] = currentX
-    #  continue
-    if step != 0 and (step == len(transitions)-1 or transitions[step+1][0] - i > i - transitions[step][0]):
-      compareX = transitions[step-1][2]
-      compareZ = transitions[step-1][1]
-    elif step == 0:
-      compareX = (transitions[step][2]+1) % len(frames[0])
-      #print("Is this X? %d" % len(frames[0]))
-      compareZ = (transitions[step][1]+1) % len(frames[0][0])
-      #print("Is this Z? %d" % len(frames[0][0]))
-    else:
-      compareX = transitions[step+1][2]
-      compareZ = transitions[step+1][1]
-
-    if compareX > currentX:
-      Left = False
-    else:
-      Left = True
-
-    Ximagemetric = (frames[i][compareZ,compareX]) / frames[i][currentZ,currentX] #frames[i].max()
-    # using the scan at index 7
-    #Xscansmetric = np.roll(XscanVal[:,11], (-1**(Left+1))*284) / XscanVal[:,11]
-    
-    if Left:
-      Xmetriccompare = (Ximagemetric - Xscansmetric[142:284])**2
-    else:
-      Xmetriccompare = (Ximagemetric - Xscansmetric[284:-142])**2
-    #metricreturns[i] = Xmetriccompare
-    #print(Ximagemetric)
-    #print(XscanXs[np.where(Xmetriccompare == Xmetriccompare.min())+142, 7])
-    #print(np.where(Xmetriccompare == Xmetriccompare.min()))
-    try:
-      Zcorr = 0#(XscanZs[np.where(Xmetriccompare == Xmetriccompare.min())+142,7]/Zwidth)
-    except:
-      Zcorr = (XscanZs[np.where(Xmetriccompare == Xmetriccompare.min())[0][0]+(142*(2-Left)),7]/(2*Zwidth))
-    try:
-      Xcorr = (XscanXs[np.where(Xmetriccompare == Xmetriccompare.min())+(142*(2-Left)),7]/(2*Xwidth))
-    except:
-      Xcorr = (XscanXs[np.where(Xmetriccompare == Xmetriccompare.min())[0][0]+(142*(2-Left)),7]/(2*Xwidth))
-
-    centers[i,0] = currentZ + Zcorr
-    centers[i,1] = currentX + Xcorr
-
-  return centers#, metricreturns
-
 def argmax_lastNaxes(A, N):
     """
     Stolen from stackoverflow, with slight modification, here:
@@ -696,9 +633,6 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=10, transwin=10,
   Zcorr += pixelSize[1]/2
   Zcorr /= pixelSize[1]
 
-  #Xcorr = 1-Xcorr
-  Xcorr = abs(Xcorr)
-  
   # make plots!
 
   # currently returns everything useful for bug testing
