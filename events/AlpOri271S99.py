@@ -16,7 +16,7 @@ continua = (np.arange(10), np.arange(60,78), np.arange(100,120), np.arange(146,1
 starpixx = (1,7)
 starpixy = (0,4)
 slope    =  5.69 # urad/cube
-offset   = -5    # mrad
+offset   = -4.875    # mrad
 # Debugging
 backgroundcheck = False
 skipcol1        = False
