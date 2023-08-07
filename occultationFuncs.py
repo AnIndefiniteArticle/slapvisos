@@ -561,6 +561,9 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=10, transwin=10,
       size of pixel in miliradians, default is VIMS HiRes mode
   comparisonsmooth : int
     number of frames over which to smooth in chi-squared space
+  returns
+  -----------
+  right now, it returns a lot of intermediate steps for debug purposes
   """
   # remove last eight spectral channels (full of -8192), and average over the rest
   print("smoothing input data over spectral window")
