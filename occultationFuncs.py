@@ -488,9 +488,9 @@ def bintoZscan(nframes, transitions, metrics):
   compare = np.ones(nframes, dtype=int)
 
   # start after the first transition
-  step = 1
+  step = 0
   # loop through frames after the first transition
-  for i in range(transitions[1][0], nframes):
+  for i in range(nframes):
     # increment step if you pass a transition
     if i > transitions[step+1][0]:
       step += 1
@@ -516,7 +516,8 @@ def bintoZscan(nframes, transitions, metrics):
     else:
       scan[i] = 6
     # if to the left of center, compare to the left
-    if i < center:
+    # hack, or if you're on step 0 and less than half of the second step width's distance from the first transition
+    if (i < center) or (step == 0 and i < (3*transitions[1][0] - transitions[2][0])/2):
       compare[i] = -1
   return scan, compare
 
