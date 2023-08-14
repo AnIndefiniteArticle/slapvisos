@@ -9,6 +9,7 @@ from scipy import stats
 
 def readVIMSimaging(cubdir, cubfiles, ncubs, nspec, height, width, visible):
   cubdata  = np.zeros((ncubs, nspec, height, width))
+  cublabs  = [None]*ncubs
   print("Reading in data from %d cubes"%ncubs)
   if visible:
     nspec0 = ps.CubeFile(cubdir+cubfiles[0]).shape[0]
@@ -19,7 +20,16 @@ def readVIMSimaging(cubdir, cubfiles, ncubs, nspec, height, width, visible):
   else:
     for i in range(ncubs):
       cubdata[i] = ps.CubeFile(cubdir+cubfiles[i]).data
-  return cubdata
+      cublabs[i] = ps.CubeFile(cubdir+cubfiles[i]).label
+  return cubdata, cublabs
+
+def getheaders(cubdir, cubfiles, ncubs):
+  cublabs = [None]*ncubs
+  for i in range(ncubs):
+    if i%100 == 0:
+      print(i, ncubs)
+    cublabs[i] = ps.CubeFile(cubdir+cubfiles[i]).label
+  return cublabs
 
 def flatField(cubdata, flatfield, mode, outdir):
   shape       = cubdata.shape
@@ -233,12 +243,13 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
     shift   = np.mean((lftshft,rgtshft))
     #print("scan %d, shift: %f, right: %f, left: %f" %(j,shift,lftshft,rgtshft))
     Xscans[:,j,0] += shift
+
     # set to nan if on wrong side of pixel
     k = np.argmin(abs(Xscans[:,j,0]))
     l = np.argmin(Xscans[:,j,0])
     m = np.argmax(Xscans[:,j,0])
-    Lefts[ np.min((l,k)):np.max((l,k)),j]=np.nan
-    Rights[np.min((k,m)):np.max((k,m)),j]=np.nan
+    Lefts[ np.min((l,k+1)):np.max((l,k-1)),j]=np.nan
+    Rights[np.min((k+1,m)):np.max((k-1,m)),j]=np.nan
     # Plot it all!
     if Plots:
       print("plotting X-scan %d"%j)
@@ -303,11 +314,11 @@ def prfmetric(PRFfile, pixelSize=(0.25,0.5), Plots=False, figsize=(10,10), dpi=3
     Boths[:,j] = Ups[:,j] - Downs[:,j]
 
     # set to nan if on wrong side of pixel
-    k = np.argmin(abs(Xscans[:,j,0]))
-    l = np.argmin(Xscans[:,j,0])
-    m = np.argmax(Xscans[:,j,0])
-    Ups[  np.min((l,k)):np.max((l,k)),j]=np.nan
-    Downs[np.min((k,m)):np.max((k,m)),j]=np.nan
+    #k = np.argmin(abs(Xscans[:,j,0]))
+    #l = np.argmin(Xscans[:,j,0])
+    #m = np.argmax(Xscans[:,j,0])
+    #Ups[  np.min((l,k)):np.max((l,k)),j]=np.nan
+    #Downs[np.min((k,m)):np.max((k,m)),j]=np.nan
 
     if Plots:
       print("plotting Z-scan %d"%j)
@@ -447,16 +458,48 @@ def argmax_lastNaxes(A, N):
     max_idx = A.reshape(new_shp).argmax(-1)
     return np.stack(np.unravel_index(max_idx, s[-N:]))
 
-def rolling_average(stretched, window, axis=0):
+def rolling_average(frames, window, axis=0, mode='same'):
   """
-  TODO: this is a basic rolling average, but does NOT preserve frame number!!!
-  I'll need to fix this up later, but not right now
+  Simple rolling average implementation along a single axis
+
+  Parameters
+  ----------
+  frames : ndarray
+      array to take rolling average along a dimension of
+  window : int
+      number of frames to roll together (size of boxcar)
+  axis   : int
+      axis to take rolling average along
+  mode   : str
+      modes of np.convolve. 'same' returns data with the same dimensions.
+      'full' and 'valid' are the other options. See np.convolve documentation
+      for more information
+
+  Returns
+  ----------
+  smoothedframes : ndarray
+      same dimensions as frames, but boxcar smoothed along the provided axis
+      using a boxcar of width window
   """
-  return np.lib.stride_tricks.sliding_window_view(stretched, window, axis=axis).mean(axis=-1)
+  #return np.lib.stride_tricks.sliding_window_view(frames, window, axis=axis).mean(axis=-1)
+  return np.apply_along_axis(np.convolve, axis, frames, v=np.ones(window), mode=mode)/window
 
 def transitionfinder(brightestPixel, window):
   """
-  TODO: make this work with rolling_average once that preserves frame number!
+  Finds when the mode brightest pixel changes and marks those frames as transition points
+  
+  Parameters
+  ----------
+  brightestPixel : array
+      array of brightest pixel values
+  window         : int
+      window around each frame over which to take the mode
+
+  Returns
+  ----------
+  transitions    : ndarray
+      2d array with length of number of transitions, and three columns:
+      frame number of transition, new brightest pixel, number of frames in window where that's the brightest pixel
   """
   # for each time step in a list of brightest pixels per timestep per wavelength
   for i in range(len(brightestPixel)):
@@ -474,10 +517,11 @@ def transitionfinder(brightestPixel, window):
 def bintoZscan(nframes, transitions, metrics):
   """
   bins rough star positions in one dimension to the scanline numbers in the perpendicular direction
-  TODO: currently only bins to Z-scanlines from rough X position
+  TODO: currently only bins to Z-scanlines from rough X position, merge with bintoXscan
   TODO: make it fit to closest Z-scanline, NOT just by which third of the pixel it falls in
 
   I'm hacking this loop to also calculate comparison pixels for X centering because it makes sense
+  TODO: separate this out
   """
   # initialize scan array
   scan = np.zeros(nframes, dtype=int)
@@ -517,16 +561,28 @@ def bintoZscan(nframes, transitions, metrics):
       scan[i] = 6
     # if to the left of center, compare to the left
     # hack, or if you're on step 0 and less than half of the second step width's distance from the first transition
-    if (i < center) or (step == 0 and i < (3*transitions[1][0] - transitions[2][0])/2):
+    if (i < center) or (step == 0 and i < (3*transitions[1][0] - transitions[2][0])/2 -10):
       compare[i] = -1
   return scan, compare
 
-def bintoXscan(subpixel, scans):
+def bintoXscan(subpixel, metrics):
   """
-  quick and  dirty what are the xscans
+  selects closest X scan based on Z subpixel positions
+
+  Parameters
+  ----------
+  subpixel : 1darray
+      array of subpixel Z positions for each timestep
+  metrics  : ndarray
+      the X metrics from the prfmetric function
+
+  Returns
+  ----------
+  scans    : 1darray
+      array of nearest X scan for each timestep
   """
   # find average perpendicular position of each scan
-  scanpos = scans[:,:,1].mean(axis=0)
+  scanpos = metrics[:,:,1].mean(axis=0)
 
   # calculate distance of each subpixel position to each scan
   distance = abs(subpixel.reshape((len(subpixel),1)) - scanpos.reshape((1,len(scanpos))))
@@ -537,7 +593,7 @@ def bintoXscan(subpixel, scans):
   # return this array of scan numbers
   return scans
 
-def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=10, transwin=10, pixelSize=(0.25,0.5), comparisonsmooth=10):
+def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25,0.5), cutoff=0.02):
   """
   Finds the location of the "star" (brightest pixel) in each frame of cubdata,
   spectrally monochromized, stretched by squaring, with a rolling average in
@@ -554,21 +610,20 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=10, transwin=10,
       output of prfmetric()
   Zmetrics  : ndarray
       output of prfmetric()
-  smoothwin : int
-      number of frames to perform rolling average over
-  transwin  : int
+  window    : int
       number of frames to perform transition mode calculation over
   pixelSize : 2-tuple
       size of pixel in miliradians, default is VIMS HiRes mode
-  comparisonsmooth : int
-    number of frames over which to smooth in chi-squared space
+  cutoff    : float
+      image metric cutoff to remove low SNR center fits
+
   returns
   -----------
   right now, it returns a lot of intermediate steps for debug purposes
   """
   # remove last eight spectral channels (full of -8192), and average over the rest
   print("smoothing input data over spectral window")
-  smoothmono = cubdata[:,specwin[0]:specwin[1]].mean(axis=1)
+  mono = cubdata[:,specwin[0]:specwin[1]].mean(axis=1)
 
   # subtract the minimum out (make everything positive) DEBUG ONLY
   #print("subtracting minimum to make everything positive")
@@ -576,60 +631,60 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=10, transwin=10,
 
   # take rolling average
   print("taking the rolling average")
-  smoothmono = rolling_average(smoothmono, smoothwin)
+  smoothmono = rolling_average(mono, window)
 
   # find brightest pixels in each frame
   print("finding the brightest pixels in each frame")
   maxcoords = argmax_lastNaxes(smoothmono, 2)
 
-  # subtract from frames average value outside of 3 columns straddling brightest
-  for i in range(len(smoothmono)):
-    background = smoothmono[i].copy()
-    background[:,maxcoords[1][i]] = np.nan
-    background[:,maxcoords[1][i]-1] = np.nan
-    try:
-      background[:,maxcoords[1][i]+1] = np.nan
-    except:
-      pass
-    smoothmono[i] -= np.nanmean(background)
-
   # find transition frames in X
   print("finding the transition frames in X")
-  Xtransitions = transitionfinder(maxcoords[1], transwin)
+  Xtransitions = transitionfinder(maxcoords[1], window)
 
   # bin X-position along line to closest Z-scan
   print("finding which Zscan to use for each frame")
-  Zscans, Xcompares = bintoZscan(len(smoothmono), Xtransitions, Zmetrics)
+  Zscans, Xcompares = bintoZscan(len(mono), Xtransitions, Zmetrics)
 
   # define brights from transitions
-  Xbrights = np.ones(len(smoothmono), dtype=int)
+  Xbrights = np.ones(len(mono), dtype=int)
   for i in range(len(Xbrights)):
     for j in range(len(Xtransitions)):
-      if i < Xtransitions[j,0]:
+      if i <= Xtransitions[j,0]:
         j -= 1
         break
     Xbrights[i] = Xtransitions[j,1]
-  Zbrights = np.array([stats.mode(maxcoords[0], keepdims=True)[0][0]] * len(smoothmono), dtype=int)
+  Zbrights = np.array([stats.mode(maxcoords[0], keepdims=True)[0][0]] * len(mono), dtype=int)
+
+  # subtract from frames average value outside of 3 columns straddling brightest
+  corrmono = np.copy(mono)
+  for i in range(len(mono)):
+    background = mono[i].copy()
+    background[:,Xbrights[i]] = np.nan
+    background[:,Xbrights[i]-1] = np.nan
+    try:
+      background[:,Xbrights[i]+1] = np.nan
+    except:
+      pass
+    corrmono[i] -= np.nanmean(background[:,1:]) # exclude 1st column
 
   # Columns to do Z-centering on
   print("Z centering")
-  #columns = np.take_along_axis(smoothmono,np.array([[maxcoords[1]]*smoothmono.shape[1],]).transpose(),2)
-  columns = np.take_along_axis(smoothmono,np.array([[Xbrights]*smoothmono.shape[1],]).transpose(),2)
+  columns = np.take_along_axis(smoothmono,np.array([[Xbrights]*corrmono.shape[1],]).transpose(),2)
   # 3-pixel center correction in Z
-  #Zcorr  = threepix(columns, maxcoords[0], Zscans, Zmetrics) #+ pixelSize[1]/2
   Zcorr  = threepix(columns, Zbrights, Zscans, Zmetrics) #+ pixelSize[1]/2
 
   # bin Z corrections to closest X-scan
   print("finding which Xscans to use")
+  # TODO: stop bypassing this
+  #Xscans = 9*np.ones(len(Zscans), dtype=int)
   Xscans = bintoXscan(Zcorr, Xmetrics)
 
   # rows to do X-centering on
   print("X centering")
-  #rows = np.take_along_axis(smoothmono,np.array([[maxcoords[0]]]).transpose(),1)
-  rows = np.take_along_axis(smoothmono,np.array([[Zbrights]]).transpose(),1)
+  rows = np.take_along_axis(corrmono,np.array([[Zbrights]]).transpose(),1)
   # 2-pixel center correction in X
-  #Xcorr, scanmetrics, imagemetrics  = twopix(rows, maxcoords[1], (maxcoords[1] + Xcompares)%15, Xscans, Xmetrics[209:359]) #+ pixelSize[0]/2
-  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:359], comparisonsmooth) #[200:370]
+  # TODO: find way to not hardcode [200:370] window limiting
+  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], cutoff) #[200:370] limits results to being on the pixel
 
   # combine centers with corrections
   Xcorr += pixelSize[0]/2
@@ -640,7 +695,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, smoothwin=10, transwin=10,
   # make plots!
 
   # currently returns everything useful for bug testing
-  return smoothmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons
+  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons
 
 def threepix(columns, brights, scans, metrics):
   """
@@ -665,7 +720,6 @@ def threepix(columns, brights, scans, metrics):
     values between 0 and 1, distance from center of pixel, because that's how the scans work
   """
   # select pixel values
-  print("column shape", columns.shape)
   brightpix = np.take_along_axis(columns[:,:,0],( np.array([brights,])                       ).transpose(),1)
   leftpix   = np.take_along_axis(columns[:,:,0],((np.array([brights,]) - 1)% columns.shape[1]).transpose(),1)
   rightpix  = np.take_along_axis(columns[:,:,0],((np.array([brights,]) + 1)% columns.shape[1]).transpose(),1)
@@ -680,6 +734,7 @@ def threepix(columns, brights, scans, metrics):
   # set correction to position with lowest chi-squared metric comparison
   corrections = metrics[np.nanargmin(comparisons, axis=1),scans,0]
 
+  # TODO make this work
   # redo with twopix when at boundary
   #k = columns.shape[1]-1
   #zerobound = np.where(brights==0)
@@ -692,7 +747,7 @@ def threepix(columns, brights, scans, metrics):
   # return corrections
   return corrections
 
-def twopix(rows, brights, compares, scans, metrics, comparisonsmooth=10):
+def twopix(rows, brights, compares, scans, metrics, cutoff=0.01):
   """
   This function performs 2-pixel centering
   Parameters
@@ -709,8 +764,8 @@ def twopix(rows, brights, compares, scans, metrics, comparisonsmooth=10):
   metrics : 2D array
     one of the metric arrays output from the prfmetric function
     [:,:,0] is positions, [:,:,3] is negative, [:,:,4] is positive
-  comparisonsmooth : int
-    number of frames over which to smooth in chi-squared space
+  cutoff  : float
+    image metric cutoff (too low for good snr)
 
   Returns
   ----------
@@ -721,10 +776,10 @@ def twopix(rows, brights, compares, scans, metrics, comparisonsmooth=10):
   """
   #scans = np.array([9]*len(scans))
   # calculate imagemetric
-  print('row shape', rows.shape)
   bripix = np.take_along_axis(rows[:,0,:],np.array([brights, ]).transpose(), 1)
   compix = np.take_along_axis(rows[:,0,:],np.array([compares,]).transpose(), 1)
-  imagemetrics = abs(compix/bripix)
+  imagemetrics = compix/bripix
+  #imagemetrics = abs(compix/bripix)**0.9
 
   # determine which side's metric to use for each timestep
   sides        = np.zeros(len(rows), dtype=int)
@@ -733,17 +788,15 @@ def twopix(rows, brights, compares, scans, metrics, comparisonsmooth=10):
   # select relevant metrics per timestep
   scanmetrics  = metrics[:,scans,sides].transpose()
   scanpos      = metrics[:,scans,    0].transpose()
-  print(scanmetrics.shape)
+
   # chi-squared comparison of imagemetric with relevant scanmetric
   comparisons  = (imagemetrics - scanmetrics)**2
 
-  # smooth comparisons and metrics
-  smoothcomparisons = rolling_average(comparisons.transpose(), comparisonsmooth).transpose()
-  smoothpos         = rolling_average(    scanpos.transpose(), comparisonsmooth).transpose()
-
   # set correction to positions with lowest chi-squared metric comparison
-  print(smoothpos.shape, np.nanargmin(smoothcomparisons, axis=1).shape)
-  corrections  = np.take_along_axis(smoothpos, np.nanargmin(smoothcomparisons, axis=1).reshape((len(smoothcomparisons), 1)), 1)[:,0]
+  corrections  = np.take_along_axis(scanpos, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0]
+
+  # set to nan any subpixel corrections that don't have enough signal in the comparison pixel
+  corrections[np.where(imagemetrics[:,0] < cutoff)] = np.nan
 
   # return corrections
   return corrections, scanmetrics, imagemetrics, comparisons
