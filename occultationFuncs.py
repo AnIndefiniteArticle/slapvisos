@@ -565,6 +565,49 @@ def bintoZscan(nframes, transitions, metrics):
       compare[i] = -1
   return scan, compare
 
+def comparison(frames, Xbrights, Zbrights):
+  """
+  This is an idea for an outline for this function that likely tries to do too much?
+  Or maybe it's just what I need to figure out the final centering issues.
+  """
+  # allocate compares and metric
+  compare = np.zeros((len(frames),2))
+  imagemetric = np.zeros(len(frames))
+  # loop through frames
+  for i in range(len(frames)):
+    # get pixel values on either side of brightest
+    center  = frames[i, Zbrights[i], Xbrights[i]]
+    left    = frames[i, Zbrights[i], Xbrights[i]-1]
+    try:
+      right = frames[i, Zbrights[i], Xbrights[i]+1]
+    except:
+      right = None
+    # if either are brighter than main pixel
+    if left > center:
+      # make that the brightest pixel 
+      Xbrights[i] -= 1
+      # i -= 1 and restart loop
+      i           -= 1
+      continue
+    if right and (right > center):
+      # make that the brightest pixel 
+      Xbrights[i] += 1
+      # i -= 1; continue
+      i           -= 1
+      continue
+    # set second-brightest pixel as comparison pixel
+    if right and left < right:
+      compare[i,0] =  1
+      compare[i,1] = right
+    else:
+      compare[i,0] = -1
+      compare[i,1] = left
+    # calculate image metric
+    imagemetric[i] = compare[i,1]/center
+    # calculate other interesting frame diagnostics: mean, mode, background, total flux, etc
+    # return the comparison pixels, image metric, etc
+    return compare, imagemetric
+
 def bintoXscan(subpixel, metrics):
   """
   selects closest X scan based on Z subpixel positions
@@ -641,21 +684,23 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   print("finding the transition frames in X")
   Xtransitions = transitionfinder(maxcoords[1], window)
 
+  # define brights from transitions
+  Xbrights = np.zeros(len(mono), dtype=int)
+  Xbrights[0] = Xtransitions[0,1]
+  for i in range(len(Xtransitions)):
+    try:
+      Xbrights[Xtransitions[i,0]+1:Xtransitions[i+1,0]+1] = Xtransitions[i,1]
+    except:
+      Xbrights[Xtransitions[i,0]:] = Xtransitions[i,1]
+  Zbrights = np.array([stats.mode(maxcoords[0], keepdims=True)[0][0]] * len(mono), dtype=int)
+
   # bin X-position along line to closest Z-scan
+  # TODO remove Xcompares from being calculated here
   print("finding which Zscan to use for each frame")
   Zscans, Xcompares = bintoZscan(len(mono), Xtransitions, Zmetrics)
 
-  # define brights from transitions
-  Xbrights = np.ones(len(mono), dtype=int)
-  for i in range(len(Xbrights)):
-    for j in range(len(Xtransitions)):
-      if i <= Xtransitions[j,0]:
-        j -= 1
-        break
-    Xbrights[i] = Xtransitions[j,1]
-  Zbrights = np.array([stats.mode(maxcoords[0], keepdims=True)[0][0]] * len(mono), dtype=int)
-
   # subtract from frames average value outside of 3 columns straddling brightest
+  # TODO Turn this into its own function to be improved upon
   corrmono = np.copy(mono)
   for i in range(len(mono)):
     background = mono[i].copy()
@@ -667,7 +712,13 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
       pass
     corrmono[i] -= np.nanmean(background[:,1:]) # exclude 1st column
 
+  # generate comparisons and image metrics
+  # TODO make this calculate Z image metrics, too
+  # TODO make later functions use these
+  compares, imagemetric = comparison(mono, Xbrights, Zbrights)
+
   # Columns to do Z-centering on
+  # TODO pass this the imagemetrics directly
   print("Z centering")
   columns = np.take_along_axis(smoothmono,np.array([[Xbrights]*corrmono.shape[1],]).transpose(),2)
   # 3-pixel center correction in Z
@@ -675,7 +726,6 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
 
   # bin Z corrections to closest X-scan
   print("finding which Xscans to use")
-  # TODO: stop bypassing this
   #Xscans = 9*np.ones(len(Zscans), dtype=int)
   Xscans = bintoXscan(Zcorr, Xmetrics)
 
@@ -684,6 +734,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   rows = np.take_along_axis(corrmono,np.array([[Zbrights]]).transpose(),1)
   # 2-pixel center correction in X
   # TODO: find way to not hardcode [200:370] window limiting
+  # TODO pass this the imagemetrics directly
   Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], cutoff) #[200:370] limits results to being on the pixel
 
   # combine centers with corrections
