@@ -746,7 +746,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # make plots!
 
   # currently returns everything useful for bug testing
-  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons
+  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns
 
 def threepix(columns, brights, scans, metrics):
   """
