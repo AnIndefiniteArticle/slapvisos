@@ -484,6 +484,13 @@ def rolling_average(frames, window, axis=0, mode='same'):
   #return np.lib.stride_tricks.sliding_window_view(frames, window, axis=axis).mean(axis=-1)
   return np.apply_along_axis(np.convolve, axis, frames, v=np.ones(window), mode=mode)/window
 
+def rolling_std(frames, window, axis=0):
+  std = np.zeros(frames.shape[axis])
+  for i in range(frames.shape[axis]):
+    std[i] = np.std(frames.take(indices=range(np.max((0,i-window)),np.min((frames.shape[axis]-1,i+window))), axis=axis), axis=axis)
+  return std
+  
+
 def transitionfinder(brightestPixel, window):
   """
   Finds when the mode brightest pixel changes and marks those frames as transition points
@@ -636,7 +643,7 @@ def bintoXscan(subpixel, metrics):
   # return this array of scan numbers
   return scans
 
-def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25,0.5), cutoff=0.02):
+def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25,0.5), brightwindow=10, metriccutoff=0.01, sigclip=3):
   """
   Finds the location of the "star" (brightest pixel) in each frame of cubdata,
   spectrally monochromized, stretched by squaring, with a rolling average in
@@ -657,8 +664,12 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
       number of frames to perform transition mode calculation over
   pixelSize : 2-tuple
       size of pixel in miliradians, default is VIMS HiRes mode
-  cutoff    : float
+  brightwindow    : float
+      brightest pixel window for removing dim frames with low snr
+  metriccutoff    : float
       image metric cutoff to remove low SNR center fits
+  sigclip : float
+    number of sigma outliers in brightwindow to clip
 
   returns
   -----------
@@ -735,7 +746,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # 2-pixel center correction in X
   # TODO: find way to not hardcode [200:370] window limiting
   # TODO pass this the imagemetrics directly
-  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], cutoff) #[200:370] limits results to being on the pixel
+  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], brightwindow, metriccutoff, sigclip) #[200:370] limits results to being on the pixel
 
   # combine centers with corrections
   Xcorr += pixelSize[0]/2
@@ -798,7 +809,7 @@ def threepix(columns, brights, scans, metrics):
   # return corrections
   return corrections
 
-def twopix(rows, brights, compares, scans, metrics, cutoff=0.01):
+def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutoff=0.01, sigclip=3):
   """
   This function performs 2-pixel centering
   Parameters
@@ -815,8 +826,12 @@ def twopix(rows, brights, compares, scans, metrics, cutoff=0.01):
   metrics : 2D array
     one of the metric arrays output from the prfmetric function
     [:,:,0] is positions, [:,:,3] is negative, [:,:,4] is positive
-  cutoff  : float
+  brightwindow  : float
+    brightest pixel window for removing dim frames with low snr
+  metriccutoff  : float
     image metric cutoff (too low for good snr)
+  sigclip : float
+    number of sigma outliers in brightwindow to clip
 
   Returns
   ----------
@@ -825,7 +840,7 @@ def twopix(rows, brights, compares, scans, metrics, cutoff=0.01):
     integers are on pixel boundaries
     values between 0 and 1, distance between integer values
   """
-  #scans = np.array([9]*len(scans))
+  scans = np.array([9]*len(scans))
   # calculate imagemetric
   bripix = np.take_along_axis(rows[:,0,:],np.array([brights, ]).transpose(), 1)
   compix = np.take_along_axis(rows[:,0,:],np.array([compares,]).transpose(), 1)
@@ -847,7 +862,11 @@ def twopix(rows, brights, compares, scans, metrics, cutoff=0.01):
   corrections  = np.take_along_axis(scanpos, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0]
 
   # set to nan any subpixel corrections that don't have enough signal in the comparison pixel
-  corrections[np.where(imagemetrics[:,0] < cutoff)] = np.nan
+  #corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
+  #corrections[np.where(bripix[:,0] < brightwindow)] = np.nan
+  corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(bripix, brightwindow))] = np.nan
+  corrections[np.where(abs(compix[:,0] - rolling_average(compix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
+  #corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
 
   # return corrections
   return corrections, scanmetrics, imagemetrics, comparisons
