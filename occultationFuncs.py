@@ -484,10 +484,10 @@ def rolling_average(frames, window, axis=0, mode='same'):
   #return np.lib.stride_tricks.sliding_window_view(frames, window, axis=axis).mean(axis=-1)
   return np.apply_along_axis(np.convolve, axis, frames, v=np.ones(window), mode=mode)/window
 
-def rolling_std(frames, window, axis=0):
-  std = np.zeros(frames.shape[axis])
-  for i in range(frames.shape[axis]):
-    std[i] = np.std(frames.take(indices=range(np.max((0,i-window)),np.min((frames.shape[axis]-1,i+window))), axis=axis), axis=axis)
+def rolling_std(timeseries, window, axis=0):
+  std = np.zeros(timeseries.shape[axis])
+  for i in range(timeseries.shape[axis]):
+    std[i] = np.std(timeseries.take(indices=range(np.max((0,i-window)),np.min((timeseries.shape[axis]-1,i+window))), axis=axis), axis=axis)
   return std
   
 
@@ -590,18 +590,18 @@ def comparison(frames, Xbrights, Zbrights):
     except:
       right = None
     # if either are brighter than main pixel
-    if left > center:
-      # make that the brightest pixel 
-      Xbrights[i] -= 1
-      # i -= 1 and restart loop
-      i           -= 1
-      continue
-    if right and (right > center):
-      # make that the brightest pixel 
-      Xbrights[i] += 1
-      # i -= 1; continue
-      i           -= 1
-      continue
+    #if left > center:
+    #  # make that the brightest pixel 
+    #  Xbrights[i] -= 1
+    #  # i -= 1 and restart loop
+    #  i           -= 1
+    #  continue
+    #if right and (right > center):
+    #  # make that the brightest pixel 
+    #  Xbrights[i] += 1
+    #  # i -= 1; continue
+    #  i           -= 1
+    #  continue
     # set second-brightest pixel as comparison pixel
     if right and left < right:
       compare[i,0] =  1
@@ -612,8 +612,8 @@ def comparison(frames, Xbrights, Zbrights):
     # calculate image metric
     imagemetric[i] = compare[i,1]/center
     # calculate other interesting frame diagnostics: mean, mode, background, total flux, etc
-    # return the comparison pixels, image metric, etc
-    return compare, imagemetric
+  # return the comparison pixels, image metric, etc
+  return compare, imagemetric
 
 def bintoXscan(subpixel, metrics):
   """
@@ -723,6 +723,9 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
       pass
     corrmono[i] -= np.nanmean(background[:,1:]) # exclude 1st column
 
+  # TODO I can see a clear spatial background that must also be corrected out
+  # I will need to make a spatial background map in two parts, left side late, right side early
+
   # generate comparisons and image metrics
   # TODO make this calculate Z image metrics, too
   # TODO make later functions use these
@@ -757,7 +760,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # make plots!
 
   # currently returns everything useful for bug testing
-  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns
+  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns, compares, imagemetric
 
 def threepix(columns, brights, scans, metrics):
   """
@@ -862,7 +865,7 @@ def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutof
   corrections  = np.take_along_axis(scanpos, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0]
 
   # set to nan any subpixel corrections that don't have enough signal in the comparison pixel
-  #corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
+  corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
   #corrections[np.where(bripix[:,0] < brightwindow)] = np.nan
   corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(bripix, brightwindow))] = np.nan
   corrections[np.where(abs(compix[:,0] - rolling_average(compix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
