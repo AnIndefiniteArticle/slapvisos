@@ -706,11 +706,12 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   Zbrights = np.array([stats.mode(maxcoords[0], keepdims=True)[0][0]] * len(mono), dtype=int)
 
   # bin X-position along line to closest Z-scan
-  # TODO remove Xcompares from being calculated here
+  # TODO remove Xcompares from being calculated here, once they are well-calculated elsewhere
   print("finding which Zscan to use for each frame")
   Zscans, Xcompares = bintoZscan(len(mono), Xtransitions, Zmetrics)
 
   # subtract from frames average value outside of 3 columns straddling brightest
+  # Temporal background subtraction!
   # TODO Turn this into its own function to be improved upon
   corrmono = np.copy(mono)
   for i in range(len(mono)):
@@ -723,10 +724,14 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
       pass
     corrmono[i] -= np.nanmean(background[:,1:]) # exclude 1st column
 
-  # TODO I can see a clear spatial background that must also be corrected out
+  # Priority TODO I can still see a clear spatial background that must also be corrected out
   # I will need to make a spatial background map in two parts, left side late, right side early
+  # need average value out-of-transit for spatial correction
+  # need standard deviation out-of-transit for noise-floor calculation for centering method
+  # need to compare out-of-transit statistics before and after, for the pixels where this is possible, to look for signal from planet
 
   # generate comparisons and image metrics
+  # TODO needs a revamped implementation
   # TODO make this calculate Z image metrics, too
   # TODO make later functions use these
   compares, imagemetric = comparison(mono, Xbrights, Zbrights)
@@ -757,7 +762,12 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   Zcorr += pixelSize[1]/2
   Zcorr /= pixelSize[1]
 
-  # make plots!
+  # Do center-informed photometry!
+  # TODO Priority
+  # model peak brightness of PSF from absolute value of brightest considering
+  # centering in both directions, and whether centering is trustworthy (is
+  # compare above noise floor calculated by taking standard deviation during
+  # the spatial background correction)
 
   # currently returns everything useful for bug testing
   return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns, compares, imagemetric
