@@ -485,7 +485,7 @@ def rolling_average(frames, window, axis=0, mode='same'):
   return np.apply_along_axis(np.convolve, axis, frames, v=np.ones(window), mode=mode)/window
 
 def rolling_std(timeseries, window, axis=0):
-  std = np.zeros(timeseries.shape)
+  std = np.zeros(timeseries.shape[axis])
   for i in range(timeseries.shape[axis]):
     std[i] = np.std(timeseries.take(indices=range(np.max((0,i-window)),np.min((timeseries.shape[axis]-1,i+window))), axis=axis), axis=axis)
   return std
@@ -684,6 +684,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   #smoothmono -= smoothmono.min()
 
   # take rolling average
+  # TODO remove 5sigma outliers
   print("taking the rolling average")
   smoothmono = rolling_average(mono, window)
 
@@ -722,7 +723,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
       background[:,Xbrights[i]+1] = np.nan
     except:
       pass
-    corrmono[i] -= np.nanmean(background[:,1:]) # exclude 1st column
+    corrmono[i] -= np.nanmedian(background[:,1:]) # exclude 1st column
 
   # Priority TODO I can still see a clear spatial background that must also be corrected out
   # I will need to make a spatial background map in two parts, left side late, right side early
