@@ -485,7 +485,7 @@ def rolling_average(frames, window, axis=0, mode='same'):
   return np.apply_along_axis(np.convolve, axis, frames, v=np.ones(window), mode=mode)/window
 
 def rolling_std(timeseries, window, axis=0):
-  std = np.zeros(timeseries.shape[axis])
+  std = np.zeros(timeseries.shape)
   for i in range(timeseries.shape[axis]):
     std[i] = np.std(timeseries.take(indices=range(np.max((0,i-window)),np.min((timeseries.shape[axis]-1,i+window))), axis=axis), axis=axis)
   return std
