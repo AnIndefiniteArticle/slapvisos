@@ -777,7 +777,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # 2-pixel center correction in X
   # TODO: find way to not hardcode [200:370] window limiting
   # TODO pass this the imagemetrics directly
-  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], windowclip, metriccutoff, sigclip) #[200:370] limits results to being on the pixel
+  Xcorr, scanmetrics, imagemetrics, comparisons, fluxcal = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], windowclip, metriccutoff, sigclip) #[200:370] limits results to being on the pixel
 
   # combine centers with corrections
   Xcorr += pixelSize[0]/2
@@ -791,9 +791,10 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # centering in both directions, and whether centering is trustworthy (is
   # compare above noise floor calculated by taking standard deviation during
   # the spatial background correction)
+  
 
   # currently returns everything useful for bug testing
-  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns, compares, imagemetric
+  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns, compares, imagemetric, fluxcal
 
 def threepix(columns, brights, scans, metrics):
   """
@@ -891,12 +892,14 @@ def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutof
   # select relevant metrics per timestep
   scanmetrics  = metrics[:,scans,sides].transpose()
   scanpos      = metrics[:,scans,    0].transpose()
+  scanval      = metrics[:,scans,    2].transpose()
 
   # chi-squared comparison of imagemetric with relevant scanmetric
   comparisons  = (imagemetrics - scanmetrics)**2
 
   # set correction to positions with lowest chi-squared metric comparison
   corrections  = np.take_along_axis(scanpos, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0]
+  fluxcal = ((np.take_along_axis(scanval, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0]) * (1 + imagemetrics[:,0])) / scanval.max()
 
   # set to nan any subpixel corrections that don't have enough signal in the comparison pixel
   corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
@@ -906,4 +909,4 @@ def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutof
   #corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
 
   # return corrections
-  return corrections, scanmetrics, imagemetrics, comparisons
+  return corrections, scanmetrics, imagemetrics, comparisons, fluxcal
