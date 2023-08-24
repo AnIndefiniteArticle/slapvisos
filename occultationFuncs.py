@@ -643,7 +643,20 @@ def bintoXscan(subpixel, metrics):
   # return this array of scan numbers
   return scans
 
-def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25,0.5), brightwindow=10, metriccutoff=0.01, sigclip=3):
+def pixelwiseclip(frames, window, sigclip):
+  """
+
+  """
+  print("pixel-wise clipping")
+  for i in np.arange(np.prod(frames.shape[1:])):
+    pixel   = frames[:,i%frames.shape[1],i//frames.shape[1]]
+    badpix  = np.where(abs(pixel - rolling_average(pixel, window, axis=0)) > sigclip*rolling_std(pixel, window, axis=0))
+    pixel[badpix] = np.nan
+    print(i%frames.shape[1], i//frames.shape[1], np.where(pixel == np.nan), badpix)
+  print(np.where(frames == np.nan), frames.shape)
+  return frames
+
+def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25,0.5), windowclip=10, metriccutoff=0.01, sigclip=3):
   """
   Finds the location of the "star" (brightest pixel) in each frame of cubdata,
   spectrally monochromized, stretched by squaring, with a rolling average in
@@ -683,8 +696,12 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   #print("subtracting minimum to make everything positive")
   #smoothmono -= smoothmono.min()
 
+  # TODO remove cosmic ray strikes
+  #print(mono.dtype)
+  #mono = pixelwiseclip(mono, windowclip, sigclip)
+  #mono[np.where(abs(mono - rolling_average(mono, window)) > 5*rolling_std(mono, window))] = np.nan
+
   # take rolling average
-  # TODO remove 5sigma outliers
   print("taking the rolling average")
   smoothmono = rolling_average(mono, window)
 
@@ -755,7 +772,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # 2-pixel center correction in X
   # TODO: find way to not hardcode [200:370] window limiting
   # TODO pass this the imagemetrics directly
-  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], brightwindow, metriccutoff, sigclip) #[200:370] limits results to being on the pixel
+  Xcorr, scanmetrics, imagemetrics, comparisons = twopix(rows, Xbrights, Xbrights + Xcompares, Xscans, Xmetrics[200:370], windowclip, metriccutoff, sigclip) #[200:370] limits results to being on the pixel
 
   # combine centers with corrections
   Xcorr += pixelSize[0]/2
@@ -808,7 +825,8 @@ def threepix(columns, brights, scans, metrics):
   comparisons = (imagemetric - scanmetrics)**2
 
   # set correction to position with lowest chi-squared metric comparison
-  corrections = metrics[np.nanargmin(comparisons, axis=1),scans,0]
+  mincompare  = np.nanargmin(comparisons, axis=1)
+  corrections = metrics[mincompare ,scans,0]
 
   # TODO make this work
   # redo with twopix when at boundary
