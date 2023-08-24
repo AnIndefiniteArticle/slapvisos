@@ -747,6 +747,11 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # need average value out-of-transit for spatial correction
   # need standard deviation out-of-transit for noise-floor calculation for centering method
   # need to compare out-of-transit statistics before and after, for the pixels where this is possible, to look for signal from planet
+  # HACK WAY TO DO THIS:
+  # I manually made a background frame by taking the median where the star isn't, and am subtracting it here.
+  # Good enough to move on the the more important priority todo: center-informed photometry
+  background = np.loadtxt("background.csv", delimiter=',')
+  corrmono  -= background
 
   # generate comparisons and image metrics
   # TODO needs a revamped implementation
