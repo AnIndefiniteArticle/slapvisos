@@ -732,6 +732,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # Temporal background subtraction!
   # TODO Turn this into its own function to be improved upon
   corrmono = np.copy(mono)
+  bgflux   = np.zeros(len(mono))
   for i in range(len(mono)):
     background = mono[i].copy()
     background[:,Xbrights[i]] = np.nan
@@ -740,7 +741,8 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
       background[:,Xbrights[i]+1] = np.nan
     except:
       pass
-    corrmono[i] -= np.nanmedian(background[:,1:]) # exclude 1st column
+    bgflux[i]    = np.nanmedian(background[:,1:]) # exclude 1st column
+    corrmono[i] -= bgflux[i]
 
   # Priority TODO I can still see a clear spatial background that must also be corrected out
   # I will need to make a spatial background map in two parts, left side late, right side early
@@ -750,8 +752,8 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # HACK WAY TO DO THIS:
   # I manually made a background frame by taking the median where the star isn't, and am subtracting it here.
   # Good enough to move on the the more important priority todo: center-informed photometry
-  background = np.loadtxt("background.csv", delimiter=',')
-  corrmono  -= background
+  spatialbackground = np.loadtxt("background.csv", delimiter=',')
+  corrmono         -= spatialbackground
 
   # generate comparisons and image metrics
   # TODO needs a revamped implementation
@@ -794,7 +796,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   
 
   # currently returns everything useful for bug testing
-  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns, compares, imagemetric, fluxcal1pix, fluxcal2pix
+  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns, compares, imagemetric, fluxcal1pix, fluxcal2pix, bgflux
 
 def threepix(columns, brights, scans, metrics):
   """
