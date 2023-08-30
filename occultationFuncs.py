@@ -793,6 +793,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # centering in both directions, and whether centering is trustworthy (is
   # compare above noise floor calculated by taking standard deviation during
   # the spatial background correction)
+  # ... I'm doing it in the jupyter notebook live while plotting it!
   
 
   # currently returns everything useful for bug testing
