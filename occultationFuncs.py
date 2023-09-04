@@ -797,7 +797,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   
 
   # currently returns everything useful for bug testing
-  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, columns, compares, imagemetric, fluxcal1pix, fluxcal2pix, bgflux
+  return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, rows, columns, compares, imagemetric, fluxcal1pix, fluxcal2pix, bgflux
 
 def threepix(columns, brights, scans, metrics):
   """
@@ -910,10 +910,9 @@ def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutof
 
   # set to nan any subpixel corrections that don't have enough signal in the comparison pixel
   corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
-  #corrections[np.where(bripix[:,0] < brightwindow)] = np.nan
-  corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(bripix, brightwindow))] = np.nan
-  corrections[np.where(abs(compix[:,0] - rolling_average(compix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
-  #corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
+  #corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(bripix, brightwindow))] = np.nan
+  #corrections[np.where(abs(compix[:,0] - rolling_average(compix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
+  ##corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
 
   # return corrections
   return corrections, scanmetrics, imagemetrics, comparisons, fluxcal1pix, fluxcal2pix
