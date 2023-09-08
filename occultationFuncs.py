@@ -1,4 +1,5 @@
-#!/usr/bin/env python # Functions for analysis of Planetary Occultaions 
+#!/usr/bin/env python
+# Functions for analysis of Planetary Occultaions 
 import numpy as np
 import pysis as ps
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ import matplotlib.colors as mpc
 import matplotlib.cm as cm
 from scipy.io import readsav
 from scipy import stats
+from scipy import interpolate
 
 def readVIMSimaging(cubdir, cubfiles, ncubs, nspec, height, width, visible):
   cubdata  = np.zeros((ncubs, nspec, height, width))
@@ -795,8 +797,7 @@ def findthestar(cubdata, specwin, Xmetrics, Zmetrics, window=10, pixelSize=(0.25
   # the spatial background correction)
   # ... I'm doing it in the jupyter notebook live while plotting it!
   
-
-  # currently returns everything useful for bug testing
+    # currently returns everything useful for bug testing
   return corrmono, maxcoords, Xbrights, Xcompares, Zbrights, Xtransitions, Zscans, Zcorr, Xscans, Xcorr, scanmetrics, imagemetrics, comparisons, rows, columns, compares, imagemetric, fluxcal1pix, fluxcal2pix, bgflux
 
 def threepix(columns, brights, scans, metrics):
@@ -881,6 +882,7 @@ def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutof
     integers are on pixel boundaries
     values between 0 and 1, distance between integer values
   """
+  # TODO THIS IS A HACK
   scans = np.array([9]*len(scans))
   # calculate imagemetric
   bripix = np.take_along_axis(rows[:,0,:],np.array([brights, ]).transpose(), 1)
@@ -902,14 +904,25 @@ def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutof
 
   # set correction to positions with lowest chi-squared metric comparison
   corrections  = np.take_along_axis(scanpos, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0]
+
+  # SUPER HACK
+  # Interpolate the centering in the isothermal model from Phil for each timestep
+  # ... I'm going to need a way to get the time of each frame ...
+  # use those modeled centers to calculate the fluxcal model for the tail
+  isotherm = np.loadtxt("../nicholso-isothermal-alpori271.out", skiprows=10)
+  isocentr = interpolate.interp1d((isotherm[:210,-2]/1.68) + 940, (isotherm[:210,3]))
+  corrections[940:] = isocentr(np.arange(940,len(corrections))) % 0.243 - 0.243/2
+  
+  # calculate flux calibration
   fluxcal1pix = ((np.take_along_axis(scanval, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0])  / scanval.max(axis=1))#* (1 + scanmetrics[:,0])
   #fluxcal2pix = ((np.take_along_axis(scanval, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0])  / scanval.max(axis=1)) * (1 + scanmetrics[:,0])
   fluxcal2pix = ((np.take_along_axis(scanval, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0])  / scanval.max(axis=1)) * (1 + np.take_along_axis(scanmetrics, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0])
-  print(np.nanmin(scanmetrics, axis=1), np.nanmax(scanmetrics, axis=1))
-  print(np.take_along_axis(scanmetrics, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1))
+  #print(np.nanmin(scanmetrics, axis=1), np.nanmax(scanmetrics, axis=1))
+  #print(np.take_along_axis(scanmetrics, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1))
 
   # set to nan any subpixel corrections that don't have enough signal in the comparison pixel
-  corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
+  # SUPER HACK MEANS I COMMENT THESE OUT
+  #corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
   #corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(bripix, brightwindow))] = np.nan
   #corrections[np.where(abs(compix[:,0] - rolling_average(compix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
   ##corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
