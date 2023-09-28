@@ -518,7 +518,9 @@ def transitionfinder(brightestPixel, window):
     if i == 0:
       transitions = np.array([[i, mode[0], mode[1]]])
     # only add a new transition point if the new mode is adjacent to the previous one, and fills more than half of the array.
-    elif (mode[0] == transitions[-1][1]+1 or mode[0] == transitions[-1][1]-1) and mode[1] > window:
+    #elif (mode[0] == transitions[-1][1]+1 or mode[0] == transitions[-1][1]-1) and mode[1] > window:
+    # HACK to not let the star go left
+    elif (mode[0] == transitions[-1][1]+1) and mode[1] > window:
       transitions = np.append(transitions, np.array([[i, mode[0], mode[1]]]), axis=0)
 
   return transitions
@@ -909,9 +911,9 @@ def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutof
   # Interpolate the centering in the isothermal model from Phil for each timestep
   # ... I'm going to need a way to get the time of each frame ...
   # use those modeled centers to calculate the fluxcal model for the tail
-  isotherm = np.loadtxt("../nicholso-isothermal-alpori271.out", skiprows=10)
-  isocentr = interpolate.interp1d((isotherm[:210,-2]/1.68) + 940, (isotherm[:210,3]))
-  corrections[940:] = isocentr(np.arange(940,len(corrections))) % 0.243 - 0.243/2
+  #isotherm = np.loadtxt("../nicholso-isothermal-alpori271.out", skiprows=10)
+  #isocentr = interpolate.interp1d((isotherm[:210,-2]/1.68) + 940, (isotherm[:210,3]))
+  #corrections[940:] = isocentr(np.arange(940,len(corrections))) % 0.243 - 0.243/2
   
   # calculate flux calibration
   fluxcal1pix = ((np.take_along_axis(scanval, np.nanargmin(comparisons, axis=1).reshape((len(comparisons), 1)), 1)[:,0])  / scanval.max(axis=1))#* (1 + scanmetrics[:,0])
@@ -922,7 +924,7 @@ def twopix(rows, brights, compares, scans, metrics, brightwindow=10, metriccutof
 
   # set to nan any subpixel corrections that don't have enough signal in the comparison pixel
   # SUPER HACK MEANS I COMMENT THESE OUT
-  #corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
+  corrections[np.where(imagemetrics[:,0] < metriccutoff)] = np.nan
   #corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(bripix, brightwindow))] = np.nan
   #corrections[np.where(abs(compix[:,0] - rolling_average(compix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
   ##corrections[np.where(abs(bripix[:,0] - rolling_average(bripix[:,0], brightwindow)) > sigclip*rolling_std(compix, brightwindow))] = np.nan
